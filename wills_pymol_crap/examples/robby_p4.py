@@ -15,11 +15,17 @@ from wills_pymol_crap.symgen import (
 def main():
    cellsize = 100
 
-   p32gen = [
+   p42gen = [
       SymElem("C4", axis=Vec(0, 0, 1), cen=Vec(0.0, 0.0, 0.0) * cellsize),
       SymElem("C2", axis=Vec(0, 0, 1), cen=Vec(0.5, 0.0, 0.0) * cellsize),
    ]
-   robby_make_symfiles(generators=p32gen, tag='P42_C4_C2', depth=6, cellsize=cellsize)
+   robby_make_symfiles(generators=p42gen, tag='P42_C4_C2', depth=6, cellsize=cellsize)
+
+   p4212gen = [
+      SymElem("C4", axis=Vec(0, 0, 1), cen=Vec(0.0, 0.0, 0.0) * cellsize),
+      SymElem("C2", axis=Vec(0, 1, 0), cen=Vec(0.5, 0.0, 0.0) * cellsize),
+   ]
+   robby_make_symfiles(generators=p4212gen, tag='P4212_C4_C2', depth=6, cellsize=cellsize)
 
 def robby_make_symfiles(generators, tag, depth, cellsize):
    cmd.delete(f'all')
