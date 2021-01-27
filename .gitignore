@@ -7,3 +7,4 @@ _build
 log/subl_build.log
 .cache
 *.bak
+*.egg-info

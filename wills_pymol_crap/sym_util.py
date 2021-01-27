@@ -12,7 +12,7 @@ import re
 import gzip
 import itertools
 import collections
-from pymol_util import *
+from wills_pymol_crap.pymol_util import *
 import operator as op
 from xyzMath import *
 from itertools import product

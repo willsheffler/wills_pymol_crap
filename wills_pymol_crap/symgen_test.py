@@ -7,33 +7,16 @@ from symgen import (
 )
 from pymol import cmd
 
-def robby_make_P42_C4_C2(depth=4):
-   '''in pymol:
-run/home/sheffler/src/pymol/symgen_test.py; robby_make_P42_C4_C2()
-'''
-
-   cmd.delete(f'all')
-   cellsize = 100
-   generators = [
-      SymElem("C4", axis=Vec(0, 0, 1), cen=cellsize * Vec(0.0, 0.0, 0.0)),
-      SymElem("C2", axis=Vec(0, 0, 1), cen=cellsize * Vec(0.5, 0.0, 0.0)),
-   ]
-   test_xtal(
-      generators,
-      tag="P42_C4_C2",
-      cell=cellsize,
-      depth=4,
-      mindepth=depth,  # does all from [mindepth..depth]
-      symdef=True,
-      one_component=True,
-      symdef_scale=1 / 100 / 1000,
-      generic_names=True,
-   )
-
-def robby_make_P4212_C4_C2(cell=80, **kw):
-   pass
-
-def test_xtal(G, cell, depth=4, mindepth=0, symdef=1, shownodes=1, **kw):
+def test_xtal(
+   G,
+   cell,
+   depth=4,
+   mindepth=0,
+   symdef=1,
+   shownodes=1,
+   verbose=False,
+   **kw,
+):
    v = cmd.get_view()
    CEN = [g.cen for g in G]
    FN = list()
@@ -54,10 +37,11 @@ def test_xtal(G, cell, depth=4, mindepth=0, symdef=1, shownodes=1, **kw):
          FN.append(find_nodes)
          if symdef:
             sdef_string = FN[-1].make_symdef(**kw)
-            print("==================== SYMDEF (dump to " + tag + "_" + str(d) +
-                  ".sym) ====================")
-            print(sdef_string)
-            print("=====================================================================")
+            if verbose:
+               print("==================== SYMDEF (dump to " + tag + "_" + str(d) +
+                     ".sym) ====================")
+               print(sdef_string)
+               print("=====================================================================")
             with open(tag + "_" + str(d) + ".sym", "w") as out:
                out.write(sdef_string)
             if "symdef_check" in kw and kw["symdef_check"]:
@@ -71,7 +55,7 @@ def test_xtal(G, cell, depth=4, mindepth=0, symdef=1, shownodes=1, **kw):
    cmd.enable(tag + "_NODES%i" % (depth))
    count = CountFrames()
    symtrie.visit(count)
-   print("N Frames:", count.count)
+   if verbose: print("N Frames:", count.count)
    cmd.set_view(v)
 
 # def test_P23_D2TET(depth=6, cell=60, **kw):

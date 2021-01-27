@@ -1,9 +1,10 @@
-from xyzMath import Vec, Mat, Xform, RAD, projperp, SYMTET, SYMOCT, isvec, randnorm
+from wills_pymol_crap.xyzMath import (Vec, Mat, Xform, RAD, projperp, SYMTET, SYMOCT, isvec,
+                                      randnorm)
 import itertools
 import re
 import os
 import inspect
-from pymol_util import cgo_cyl, pymol
+from wills_pymol_crap.pymol_util import cgo_cyl, pymol
 from pymol import cmd
 
 symelem_nshow = 0
@@ -91,7 +92,7 @@ class SymElem(object):
             self.frames[i] = (xc) * x * (~xc)
       assert self.frames
       if not self.frames[0] == Xform():
-         print(self.kind, self.frames[0].pretty())
+         if verbose: print(self.kind, self.frames[0].pretty())
          assert self.frames[0] == Xform()
 
    def show(self, label=None, **kwargs):
@@ -114,23 +115,23 @@ class SymElem(object):
          x = kwargs["xform"]
       if self.kind[0] in "CD":
          if not col:
-            if self.kind is "C2":
+            if self.kind == "C2":
                col = (1.0, 0.0, 0.0)
-            elif self.kind is "C3":
+            elif self.kind == "C3":
                col = (0.0, 1.0, 0.0)
-            elif self.kind is "C4":
+            elif self.kind == "C4":
                col = (0.0, 0.0, 1.0)
-            elif self.kind is "C5":
+            elif self.kind == "C5":
                col = (1.0, 0.7, 0.8)
-            elif self.kind is "C6":
+            elif self.kind == "C6":
                col = (1.0, 1.0, 0.0)
-            elif self.kind is "D2":
+            elif self.kind == "D2":
                col = (1.0, 0.0, 1.0)
-            elif self.kind is "D3":
+            elif self.kind == "D3":
                col = (0.0, 1.0, 1.0)
-            elif self.kind is "D4":
+            elif self.kind == "D4":
                col = (1.0, 0.5, 0.0)
-            elif self.kind is "D6":
+            elif self.kind == "D6":
                col = (0.5, 1.0, 0.0)
             else:
                raise NotImplementedError("unknown symelem kind " + self.kind)
@@ -269,7 +270,7 @@ class SymElem(object):
             p2.round0()
             p3.round0()
             p4.round0()
-            # print p1,p2,p3,p4
+            # if verbose: print p1,p2,p3,p4
             CGO.extend([
                pymol.cgo.BEGIN,
                pymol.cgo.TRIANGLES,
@@ -512,8 +513,8 @@ class SymTrieNode(object):
       parentxform = xform
       if self.parent:
          if not self.parent.position == parentxform:
-            print("parentxform mismatch!", self.parent.position.pretty())
-            print("parentxform mismatch!", parentxform.pretty())
+            if verbose: print("parentxform mismatch!", self.parent.position.pretty())
+            if verbose: print("parentxform mismatch!", parentxform.pretty())
             assert self.parent.position == parentxform
       xform = parentxform * self.generators[self.ielem].frames[self.iframe]
       visitor(self, depth=depth, xform=xform, parentxform=parentxform)
@@ -538,22 +539,32 @@ class SymTrieSanityCheckVisitor(object):
       if STN.parent:
          assert STN in STN.parent.children
 
-def generate_sym_trie_recurse(generators, depth, opts, body, heads, newheads, igen):
+def generate_sym_trie_recurse(
+   generators,
+   depth,
+   opts,
+   body,
+   heads,
+   newheads,
+   igen,
+   verbose=False,
+):
    if depth < 1:
       return
-   print("GEN SYM TRIE", "depth", depth, "igen", igen, "heads", len(heads), "newheads",
-         len(newheads))
+   if verbose:
+      print("GEN SYM TRIE", "depth", depth, "igen", igen, "heads", len(heads), "newheads",
+            len(newheads))
    newnewheads = []
    # for ielem, elem in enumerate(generators):
    ielem = igen
    elem = generators[igen]
    for iframe, frame in enumerate(elem.frames):
-      if iframe is 0:
+      if iframe == 0:
          continue  # skip identity
-      # print "FRAME",frame.pretty()
+      # if verbose: print "FRAME",frame.pretty()
       for head, xpos in itertools.chain(newheads, heads):
          candidate = xpos * frame
-         # print candidate.pretty()
+         # if verbose: print candidate.pretty()
          seenit = False
          for seennode, seenframe in itertools.chain(newnewheads, newheads, heads, body):
             if candidate == seenframe:
@@ -565,7 +576,7 @@ def generate_sym_trie_recurse(generators, depth, opts, body, heads, newheads, ig
             head.add_child(newhead)
             newhead.parent = head
             newnewheads.append((newhead, candidate))
-            # print "NEWHEAD",candidate
+            # if verbose: print "NEWHEAD",candidate
 
    newheads.extend(newnewheads)
 
@@ -574,15 +585,15 @@ def generate_sym_trie_recurse(generators, depth, opts, body, heads, newheads, ig
       heads = newheads
       newheads = []
 
-   # print len(newheads),igen,len(generators)
+   # if verbose: print len(newheads),igen,len(generators)
    if depth > 1:  # and newheads:
       generate_sym_trie_recurse(generators, depth - 1, opts, body, heads, newheads,
                                 (igen + 1) % len(generators))
 
-def generate_sym_trie(generators, depth=10, opts=None):
+def generate_sym_trie(generators, depth=10, opts=None, verbose=False):
    if opts is None:
       opts = dict()
-   print("NEW SYM TRIE")
+   if verbose: print("NEW SYM TRIE")
    root = SymTrieNode(generators, 0, 0, 0, Xform())
    heads = [
       (root, Xform()),
@@ -605,7 +616,7 @@ import sys
 if not newpath in sys.path:
    sys.path.append(newpath)
 from xyzMath import Vec, Mat, Xform, RAD, projperp, Ux, Uy, Uz
-from pymol_util import cgo_sphere, cgo_segment, cgo_cyl
+from wills_pymol_crap.pymol_util import cgo_sphere, cgo_segment, cgo_cyl
 #from SymTrie import SymElem, SymTrieNode, generate_sym_trie
 import itertools
 import random
@@ -618,7 +629,7 @@ def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9
    cmd.delete(newobj)
    sele = "((" + sele + ") and (not TMP_makesym_*))"
    selechains = cmd.get_chains(sele)
-   print(selechains)
+   if verbose: print(selechains)
    if not depth:
       frames = frames0
    else:
@@ -632,7 +643,7 @@ def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9
    for i, x in enumerate(frames):
       if i >= n:
          break
-      # print i, x.pretty()
+      # if verbose: print i, x.pretty()
       tmpname = "TMP_makesym_%i" % i
       cmd.create(tmpname, sele)
       for j, c in enumerate(selechains):
@@ -746,14 +757,15 @@ def makeicos(sel='all', name="ICOS", n=60):
    makesym(frames0=SYMICS, sele=sel, newobj=name, n=n)
 
 def make_d3oct(d3, cage, cage_trimer_chain="A", depth=4, maxrad=9e9):
-   print(
-      cmd.super("((" + cage + ") and (chain " + cage_trimer_chain + "))",
-                "((" + d3 + ") and (chain A))"))
+   if verbose:
+      print(
+         cmd.super("((" + cage + ") and (chain " + cage_trimer_chain + "))",
+                   "((" + d3 + ") and (chain A))"))
    zcagecen = com(cage + " and name ca").z
-   print(zcagecen)
+   if verbose: print(zcagecen)
    # return
    x = alignvectors(Vec(1, 1, 1), Vec(1, -1, 0), Vec(0, 0, 1), Vec(1, 0, 0))
-   # print x * Vec(1,1,1), x*Vec(1,-1,0)
+   # if verbose: print x * Vec(1,1,1), x*Vec(1,-1,0)
    # RAD(Ux,180), RAD(Uy,120),
    G = [
       RAD(Ux, 180),
@@ -767,14 +779,15 @@ def make_d3oct(d3, cage, cage_trimer_chain="A", depth=4, maxrad=9e9):
    cmd.enable("MAKESYM")
 
 def make_d3tet(d3, cage, cage_trimer_chain="A", depth=4, maxrad=9e9):
-   print(
-      cmd.super("((" + cage + ") and (chain " + cage_trimer_chain + "))",
-                "((" + d3 + ") and (chain A))"))
+   if verbose:
+      print(
+         cmd.super("((" + cage + ") and (chain " + cage_trimer_chain + "))",
+                   "((" + d3 + ") and (chain A))"))
    zcagecen = com(cage + " and name ca").z
-   print(zcagecen)
+   if verbose: print(zcagecen)
    # return
    x = alignvectors(Vec(1, 1, 1), Vec(1, -1, 0), Vec(0, 0, 1), Vec(1, 0, 0))
-   # print x * Vec(1,1,1), x*Vec(1,-1,0)
+   # if verbose: print x * Vec(1,1,1), x*Vec(1,-1,0)
    # RAD(Ux,180), RAD(Uy,120),
    G = [
       RAD(Ux, 180),
@@ -787,7 +800,7 @@ def make_d3tet(d3, cage, cage_trimer_chain="A", depth=4, maxrad=9e9):
    cmd.enable("MAKESYM")
 
 def print_node(node, **kwargs):
-   print(kwargs['depth'] * "    ", node, kwargs['xform'].pretty())
+   if verbose: print(kwargs['depth'] * "    ", node, kwargs['xform'].pretty())
 
 def show_node(node, **kwargs):
    if node.iframe == 1:
@@ -877,7 +890,7 @@ class BuildCGO(object):
             self.jumps.add(pcen.distance(xcen))
          if self.showlinks:
             if self.bounds_check(pcen) or self.bounds_check(xcen):
-               # print "DEBUG",icen,px.pretty(),px==Xform()
+               # if verbose: print "DEBUG",icen,px.pretty(),px==Xform()
                if icen != 0 or node.parent:  # skip node 0 for root
                   self.add_segment(pcen, xcen, icen)
          if self.bounds_check(xcen):
@@ -917,14 +930,14 @@ class BuildCGO(object):
       self.CGO.extend(
          cgo_cyl_arrow(c1, c2, r=0.5, col=self.colors[max(0, icol - 1)], col2=self.colors[icol]))
 
-   def show(self, **kwargs):
+   def show(self, verbose=False, **kwargs):
       v = cmd.get_view()
       cmd.delete(self.label)
       cmd.load_cgo(self.CGO, self.label)
       cmd.set_view(v)
       # for i,c in enumerate(self.nodes):
       # showsphere(c,1.5,col=self.colors[i])
-      print(self.jumps)
+      if verbose: print(self.jumps)
 
 # TODO move to xyzMath
 
@@ -1002,7 +1015,7 @@ class ComponentCenterVisitor(object):
       lowest_d = 9e9
       while queue:
          CCparent = queue.pop(0)
-         # print "NEW VERTEX",CCparent
+         # if verbose: print "NEW VERTEX",CCparent
          if CCparent in visited:
             continue
          assert CCparent not in visited
@@ -1014,14 +1027,14 @@ class ComponentCenterVisitor(object):
                   continue
                d = CC.distance(CCparent)
                if closedist - d > 0.01:
-                  # print "  new closedist",d
+                  # if verbose: print "  new closedist",d
                   closest, closedist = list(), d
                if abs(closedist - d) < 0.01:
                   closest.append(CC)
          lowest_d = min(lowest_d, closedist)
          for v in visited:
             assert v not in closest
-         # print "  ",CCparent,closedist,len(closest)
+         # if verbose: print "  ",CCparent,closedist,len(closest)
          if closedist > lowest_d * dhint:
             continue
          queue.extend(closest)
@@ -1032,7 +1045,7 @@ class ComponentCenterVisitor(object):
                self.childmap[CCparent] = list()
             self.childmap[CCparent].append(CC)
 
-   def check_jumps(self):
+   def check_jumps(self, verbose=False):
       if not self.parentmap:
          self.makeCCtree()
       jset = VecDict()
@@ -1042,11 +1055,11 @@ class ComponentCenterVisitor(object):
       jsetsort = VecDict()
       for k in list(jset.keys()):
          xyz = sorted((abs(round(k.x, 5)), abs(round(k.y, 5)), abs(round(k.z, 5))))
-         # print xyz
+         # if verbose: print xyz
          jsetsort[Vec(xyz[0], xyz[1], xyz[2])] = True
-      print("UNIQUE PERMUTED JUMPS:")
+      if verbose: print("UNIQUE PERMUTED JUMPS:")
       for k in list(jsetsort.keys()):
-         print("  ", k)
+         if verbose: print("  ", k)
 
    def sanity_check(self):
       if not self.parentmap:
@@ -1060,7 +1073,7 @@ class ComponentCenterVisitor(object):
       for priCC, CClist in list(self.priCCtoCClist.items()):
          for i1, n1 in enumerate(CClist):
             if n1 not in list(self.parentmap.keys()):
-               print("NOT IN PARENTMAP:", n1)
+               if verbose: print("NOT IN PARENTMAP:", n1)
             for i2, n2 in enumerate(CClist):
                assert (i1 == i2) == (n1 == n2)  # xor
       for priCC, CCframes in list(self.priCCtoCCframes.items()):
@@ -1104,7 +1117,7 @@ class ComponentCenterVisitor(object):
       scale = 1.0
       if "symdef_scale" in kwargs:
          scale = kwargs['symdef_scale']
-      # for k,v in self.parentmap.items(): print "parentmap:",k,v
+      # for k,v in self.parentmap.items(): if verbose: print "parentmap:",k,v
       node2num = VecDict()
       for ip, val in enumerate(self.priCCtoCCframes.items()):
          priCC, CCframes = val
@@ -1337,7 +1350,7 @@ class RosettaSymDef(object):
 
    def parse(self, s):
       for line in s.split("\n"):
-         print(line)
+         if verbose: print(line)
          if line.startswith("xyz"):
             dummy, name, X, Y, O = re.split(r"\s+", line.strip())
             X = X.split(",")
@@ -1350,7 +1363,7 @@ class RosettaSymDef(object):
          elif line.startswith("connect_virtual"):
             line = line.replace("SUBUNIT ", "SUBUNIT")
             splt = re.split(r'\s+', line.strip())
-            # print "SPLT:", splt
+            # if verbose: print "SPLT:", splt
             dummy, name, v1name, v2name = splt[:4]
             self.add_edge(name, v1name, v2name)
 
@@ -1372,9 +1385,9 @@ class RosettaSymDef(object):
             jdir = (v2[2] - v1[2]).normalized()
             v1x = v1[0].normalized()
             if jdir.distance(v1x) > 0.0001:
-               print("connect_virtual ERROR", name, v1name, v2name)
-               print("  jdir", jdir)
-               print("  v1x ", v1x)
+               if verbose: print("connect_virtual ERROR", name, v1name, v2name)
+               if verbose: print("  jdir", jdir)
+               if verbose: print("  v1x ", v1x)
                raise ValueError
 
    def show(self, tag="SYMDEF", XYlen=5.0, r=3.0, **kwargs):
@@ -1386,7 +1399,7 @@ class RosettaSymDef(object):
          # CGO.extend( cgo_sphere(c=O,r=r) )
          cen = self.displaycen(name, xyo, offset=XYlen)
          if cen in seenit:
-            print("ERROR overlapping display center", cen)
+            if verbose: print("ERROR overlapping display center", cen)
             # assert not cen in seenit
          seenit.append(cen)
          CGO.extend(cgo_lineabs(cen, cen + X * XYlen, col=(1, 0, 0)))

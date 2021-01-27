@@ -4,7 +4,7 @@ import os
 newpath = os.path.dirname(inspect.getfile(inspect.currentframe()))  # script directory
 if not newpath in sys.path:
    sys.path.append(newpath)
-from pymol_util import *
+from wills_pymol_crap.pymol_util import *
 from xyzMath import *
 
 def showmotifs(sel=None):

@@ -5,7 +5,7 @@ import pickle
 import itertools
 newpath = os.path.dirname(inspect.getfile(inspect.currentframe()))  # script directory
 from xyzMath import Vec, Mat, Xform, Ux, Uy, Uz
-from pymol_util import pymol, cgo_sphere, cube
+from wills_pymol_crap.pymol_util import pymol, cgo_sphere, cube
 
 class SpaceGroup(object):
    """docstring for SpaceGroup"""
@@ -55,8 +55,8 @@ class SpaceGroup(object):
       # print
       return Xform(Mat(X.x, X.y, X.z, Y.x, Y.y, Y.z, Z.x, Z.y, Z.z), Vec(Tx, Ty, Tz))
       # return Xform( Mat( X.x, Y.x, Z.x,
-      # 	               X.y, Y.y, Z.y,
-      # 	               X.z, Y.z, Z.z,
+      #                 X.y, Y.y, Z.y,
+      #                 X.z, Y.z, Z.z,
       #                    ), Vec(Tx,Ty,Tz) )
       # raise NotImplementedError
 

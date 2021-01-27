@@ -1,7 +1,7 @@
 import sys, os, gzip, cPickle, random
 sys.path.append("/Users/sheffler/pymol")
 from xyzMath import *
-from pymol_util import *
+from wills_pymol_crap.pymol_util import *
 
 BIOUNIT_DIR = "/data/pdb/biounit/"
 
@@ -48,14 +48,14 @@ def get_pdbids():
 
 class TH(object):
    """
-	T_H_HIT_HEADER        ID   pdb_b pchn  pres  chn Nchn clen nres  stres cenres endres                   CEN_X                   CEN_Y                   CEN_Z                   AXS_X                   AXS_Y                   AXS_Z                   ORI_X                   ORI_Y                   ORI_Z
-	TERM_HELIX_HIT 101m1_HC1      101m1 A   140   -1    1  154  154    134    141    149       27.43285494578981       5.165086809753125      -1.288777309947627    -0.04107042507923700     -0.9961428002295765     0.07754187084787641     -0.9000069395055572    0.003178218272984028     -0.4358639785190436
-	"""
+   T_H_HIT_HEADER        ID   pdb_b pchn  pres  chn Nchn clen nres  stres cenres endres                   CEN_X                   CEN_Y                   CEN_Z                   AXS_X                   AXS_Y                   AXS_Z                   ORI_X                   ORI_Y                   ORI_Z
+   TERM_HELIX_HIT 101m1_HC1      101m1 A   140   -1    1  154  154    134    141    149       27.43285494578981       5.165086809753125      -1.288777309947627    -0.04107042507923700     -0.9961428002295765     0.07754187084787641     -0.9000069395055572    0.003178218272984028     -0.4358639785190436
+   """
    def __init__(self, line):
       super(TH, self).__init__()
       dat = line.split()
       # for i,d in enumerate(dat):
-      # 	print i,d
+      #  print i,d
       # sys.exit()
       self.id = dat[1]
       self.pdb = dat[2]
@@ -109,21 +109,21 @@ class TH(object):
 
 class HH(object):
    """
-	#  HELIX_JUNCTION   101m1_HC1 101m1_HN2   1   2   141  16 CN    20  12   0 -10   0  10   170.768906     0.746851         0.298094    -0.620917     0.724984         0.000000     0.000000     0.000000        68.704990    30.614476    -3.059844
-	#  HELIX_JUNCTION
-	#  hits[ihit].pdb "_H" (hits[ihit].chain<0?"C":"N") ihit
-	#  hits[jhit].pdb "_H" (hits[jhit].chain<0?"C":"N") jhit
-	#  ihit
-	#  jhit
-	#    a.cenres+(int)Ashift
-	#    a.stopres-a.startres+1
-	#    (a.chain<0?"C":"N") (b.chain<0?"C":"N")   b.cenres+(int)Bshift   b.stopres-b.startres+1   Aoffset   Boffset   Ashift   Bshift   ang   talonga   raxis.x()   rotcen.x()   x.t.x()
-	"""
+   #  HELIX_JUNCTION   101m1_HC1 101m1_HN2   1   2   141  16 CN    20  12   0 -10   0  10   170.768906     0.746851         0.298094    -0.620917     0.724984         0.000000     0.000000     0.000000        68.704990    30.614476    -3.059844
+   #  HELIX_JUNCTION
+   #  hits[ihit].pdb "_H" (hits[ihit].chain<0?"C":"N") ihit
+   #  hits[jhit].pdb "_H" (hits[jhit].chain<0?"C":"N") jhit
+   #  ihit
+   #  jhit
+   #    a.cenres+(int)Ashift
+   #    a.stopres-a.startres+1
+   #    (a.chain<0?"C":"N") (b.chain<0?"C":"N")   b.cenres+(int)Bshift   b.stopres-b.startres+1   Aoffset   Boffset   Ashift   Bshift   ang   talonga   raxis.x()   rotcen.x()   x.t.x()
+   """
    def __init__(self, line, hconnect):
       super(HH, self).__init__()
       dat = line.split()
       # for i,d in enumerate(dat):
-      # 	print i,d
+      #  print i,d
       # sys.exit()
       self.h1 = hconnect[dat[1]]
       self.h2 = hconnect[dat[2]]
@@ -211,25 +211,25 @@ def load_data(Nh=999999999999, Nj=999999999999, reload=True):
                if not have_data_cache: O.write(line)
             except (KeyError, RuntimeError):
                pass
-            # print line			# print hh			# print " ",hh.h1			# print " ",hh.h2			# break
+            # print line         # print hh        # print " ",hh.h1       # print " ",hh.h2       # break
    print "joints:", len(joints)
    # print "dumping"
    # with gzip.open("/Users/sheffler/tmp/biounit_term_helix_%03i-%03i.pickle.gz"%(MAXCLEN,MAXTLEN),'w') as out:
-   # 	cPickle.dump((hconnect,joints),out,protocol=cPickle.HIGHEST_PROTOCOL)
+   #  cPickle.dump((hconnect,joints),out,protocol=cPickle.HIGHEST_PROTOCOL)
 
    joints = [j for j in joints if j.h1.chain_num * j.h2.chain_num < 0]
 
    return hconnect, joints
 
 # def rotcen(x):
-# 	axs,ang	= x.rotation_axis()
-# 	nf    = int(round(2*pi/ang))
-# 	cen,sub = Vec(0,0,0),Vec(0,0,0)
-# 	for i in range(1,nf):
-# 		sub = x*sub
-# 		cen += sub
-# 	cen /= nf
-# 	return axs,cen,nf
+#  axs,ang  = x.rotation_axis()
+#  nf    = int(round(2*pi/ang))
+#  cen,sub = Vec(0,0,0),Vec(0,0,0)
+#  for i in range(1,nf):
+#     sub = x*sub
+#     cen += sub
+#  cen /= nf
+#  return axs,cen,nf
 
 def load_biounit(fn, obj):
    cmd.load(fn, obj)
@@ -271,17 +271,17 @@ def makesym(axs, cen, nf, objs=None, tag="makesym"):
          cmd.delete(o)
       rot(tag + "_%i" % i, axs, i * 360 / nf, cen)
       # if i == 1:
-      # 	clashsele = "({0}_0 within 2 of {0}_1) or ({0}_1 within 2 of {0}_0)".format(tag)
-      # 	print clashsele
-      # 	symclash = cmd.select(clashsele)
-      # 	if symclash > 0:
-      # 		print "symmetric clashes",symclash
-      # 		cmd.delete(tag+"_*")
-      # 		return False
+      #  clashsele = "({0}_0 within 2 of {0}_1) or ({0}_1 within 2 of {0}_0)".format(tag)
+      #  print clashsele
+      #  symclash = cmd.select(clashsele)
+      #  if symclash > 0:
+      #     print "symmetric clashes",symclash
+      #     cmd.delete(tag+"_*")
+      #     return False
       # renumber(tag+"_%i"%i)
       # chains = cmd.get_chains(tmpsel)
       # for j,c in enumerate(chains):
-      # 	cmd.alter("tmp%i and chain %s"%(i,c),"chain='%s'"%ROSETTA_CHAINS[len(chains)*i+j])
+      #  cmd.alter("tmp%i and chain %s"%(i,c),"chain='%s'"%ROSETTA_CHAINS[len(chains)*i+j])
    # for i in range(nf): cmd.create("tmp%i"%i,sel+" and (not tmp*)",1,1)
    for i in range(nf):
       cmd.show("lines", tag + "_%i and name n+ca+c" % i)
@@ -292,28 +292,28 @@ def makesym(axs, cen, nf, objs=None, tag="makesym"):
    return True
 
 # def symcheck(a,b,x,tol=1.0):
-# 	axs,ang	= x.rotation_axis()
-# 	skew = abs(x.t.dot(axs))
-# 	if skew > 5*tol: return False
-# 	nf    = round(2*pi/ang)
-# 	# # if nf <= 2 or 30 < nf: return False
-# 	# nferr = abs(2*pi/ang-nf)
-# 	# angerr = abs(ang-2*pi/nf)
-# 	# # if x.t.length()*sin(angerr) > tol: return False
+#  axs,ang  = x.rotation_axis()
+#  skew = abs(x.t.dot(axs))
+#  if skew > 5*tol: return False
+#  nf    = round(2*pi/ang)
+#  # # if nf <= 2 or 30 < nf: return False
+#  # nferr = abs(2*pi/ang-nf)
+#  # angerr = abs(ang-2*pi/nf)
+#  # # if x.t.length()*sin(angerr) > tol: return False
 
-# 	# print
-# 	# print "SYMCHECK",skew
-# 	# print "SYMCHECK",nferr
-# 	# print "SYMCHECK",angerr
-# 	# print "SYMCHECK",x.t.length()*sin(angerr)
-# 	# print
+#  # print
+#  # print "SYMCHECK",skew
+#  # print "SYMCHECK",nferr
+#  # print "SYMCHECK",angerr
+#  # print "SYMCHECK",x.t.length()*sin(angerr)
+#  # print
 
-# 	axs0,cen0,nf0 = symmetrize_xform(a.h1.cen,x,nf)
-# 	xsym = rotation_around_degrees(axs0,360.0/float(nf0),cen0)
-# 	err = (x * a.h2.cen  -   xsym * a.h2.cen).length_squared() + (x * b.h2.cen  -   xsym * b.h2.cen).length_squared()
-# 	if err < tol: return True
+#  axs0,cen0,nf0 = symmetrize_xform(a.h1.cen,x,nf)
+#  xsym = rotation_around_degrees(axs0,360.0/float(nf0),cen0)
+#  err = (x * a.h2.cen  -   xsym * a.h2.cen).length_squared() + (x * b.h2.cen  -   xsym * b.h2.cen).length_squared()
+#  if err < tol: return True
 
-# 	return False
+#  return False
 
 def helix_joint_has_clashes(a, b):
    cmd.remove('not name n+ca+c+o+cb')
@@ -511,10 +511,10 @@ if __name__ == '__main__':
    # hconn,joints = load_data()
    # random.shuffle(joints)
    # for j in joints[:5]:
-   # 	print j
-   # 	print " ",j.h1
-   # 	print " ",j.h2
-   # 	print
+   #  print j
+   #  print " ",j.h1
+   #  print " ",j.h2
+   #  print
 
 def runsearch():
    global MAXCLEN, MAXTLEN

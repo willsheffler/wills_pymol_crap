@@ -3,26 +3,26 @@ import sys, os, inspect
 newpath = os.path.dirname(inspect.getfile(inspect.currentframe()))  # script directory
 if not newpath in sys.path: sys.path.append(newpath)
 import string, re, gzip, itertools, operator
-from pymol_util import *
+from wills_pymol_crap.pymol_util import *
 from sym_util import *
 from xyzMath import *
 import random
 """
 the only thing you need is probably the math, such as it is, here:
-	rotation_around_dof_to_set_vec_vec_angle(dofaxis,tgt0,v1,v2):
-	gets the rotation angles, if any, of v2 around dofaxis such that angle(v1,v2) == tgt0
-	dofaxis = helix axis
-	tgt0 = sym magic angle (54.7=asin(sr2/sr3),35.3=asin(sr1/sr3),22.9=asin(G/2/sr3))
-	v1 = symaxis1 (comp1 and comp2 in arbitrary frame, but aligned together along helix axis)
-	v2 = symaxis2 (comp1 and comp2 in arbitrary frame, but aligned together along helix axis)
+   rotation_around_dof_to_set_vec_vec_angle(dofaxis,tgt0,v1,v2):
+   gets the rotation angles, if any, of v2 around dofaxis such that angle(v1,v2) == tgt0
+   dofaxis = helix axis
+   tgt0 = sym magic angle (54.7=asin(sr2/sr3),35.3=asin(sr1/sr3),22.9=asin(G/2/sr3))
+   v1 = symaxis1 (comp1 and comp2 in arbitrary frame, but aligned together along helix axis)
+   v2 = symaxis2 (comp1 and comp2 in arbitrary frame, but aligned together along helix axis)
 
 you then "slide" along the helix axis vector to intersect the sym axis:
 def slide_to_make_lines_intersect(dof,l,l0,m,m0):
-	dof = helix axis
-	l   = symaxis1
-	l0  = any point along line of symmetry for comp1
-	m   = symaxis2 (rotated according to the above around helix axis)
-	m0  = any point along line of symmetry for comp2
+   dof = helix axis
+   l   = symaxis1
+   l0  = any point along line of symmetry for comp1
+   m   = symaxis2 (rotated according to the above around helix axis)
+   m0  = any point along line of symmetry for comp2
 """
 
 HELIX_D_PER_RES = 1.53663757571
@@ -59,24 +59,24 @@ def n_helix_ray(sele):
 
 def n_terminal_helix(ss, maxend=5):
    """
-	>>> ss = "LLLHHHHHHHHHHHHHHHHLLLLLLLLLLLLLHHHHHHHHHHHHHHHHLLL"
-	>>> hh = n_terminal_helix(ss)
-	>>> print ss[:hh[0]],ss[hh[0]:hh[1]+1],ss[hh[1]+1:]
-	LLLH HHHHHHHHHHHHHH HLLLLLLLLLLLLLHHHHHHHHHHHHHHHHLLL
+   >>> ss = "LLLHHHHHHHHHHHHHHHHLLLLLLLLLLLLLHHHHHHHHHHHHHHHHLLL"
+   >>> hh = n_terminal_helix(ss)
+   >>> print ss[:hh[0]],ss[hh[0]:hh[1]+1],ss[hh[1]+1:]
+   LLLH HHHHHHHHHHHHHH HLLLLLLLLLLLLLHHHHHHHHHHHHHHHHLLL
 
-	>>> hh = c_terminal_helix(ss)
-	>>> print ss[:hh[0]],ss[hh[0]:hh[1]+1],ss[hh[1]+1:]
-	LLLHHHHHHHHHHHHHHHHLLLLLLLLLLLLLH HHHHHHHHHHHHHH HLLL
+   >>> hh = c_terminal_helix(ss)
+   >>> print ss[:hh[0]],ss[hh[0]:hh[1]+1],ss[hh[1]+1:]
+   LLLHHHHHHHHHHHHHHHHLLLLLLLLLLLLLH HHHHHHHHHHHHHH HLLL
 
-	>>> print c_terminal_helix("")
-	None
+   >>> print c_terminal_helix("")
+   None
 
-	>>> print c_terminal_helix("L")
-	None
+   >>> print c_terminal_helix("L")
+   None
 
-	>>> print c_terminal_helix("H")
-	None
-	"""
+   >>> print c_terminal_helix("H")
+   None
+   """
    i = 0
    while i < len(ss) and ss[i] == 'L' and ss[i] != 'E':
       i += 1
@@ -122,8 +122,8 @@ def show_helix_termini_rays(sele, maxend=5):
 
 def find_helix_align_cage_xforms(nr1, cr1, nr2, cr2, nfst1, nfst2, num_sym_expand=1, showme=None):
    """
-	assumes sym axes are both Z
-	"""
+   assumes sym axes are both Z
+   """
    symangs = (ATET, AOCT, AICS)
    symlabs = ("TET", "OCT", "ICS")
    # symangs = (45.0,)
@@ -490,13 +490,13 @@ def teststrut(N=10, maxres=99999, showme="NONE", nexpand=1,
    print "stopped after", count, "hits,", npdbs, "pdbs,", tries, "tries  EST HITS:", str(esthits)
 
    print """
-	set cartoon_cylindrical_helices=1
-	run /Users/sheffler/pymol/struts.py
-	cProfile.runctx("test()",globals(),locals(),"/work/sheffler/tmp/test.prof")
-	p = pstats.Stats('/work/sheffler/tmp/test.prof')
-	p.sort_stats("cumulative").print_stats(30)
-	os.remove("/work/sheffler/tmp/test.prof")
-	"""
+   set cartoon_cylindrical_helices=1
+   run /Users/sheffler/pymol/struts.py
+   cProfile.runctx("test()",globals(),locals(),"/work/sheffler/tmp/test.prof")
+   p = pstats.Stats('/work/sheffler/tmp/test.prof')
+   p.sort_stats("cumulative").print_stats(30)
+   os.remove("/work/sheffler/tmp/test.prof")
+   """
 
    # v = cmd.get_view()
    # print "TEST HELIX ALIGN"
@@ -509,19 +509,19 @@ def teststrut(N=10, maxres=99999, showme="NONE", nexpand=1,
    # c2 = randvec()*2
    # showline(a1*100,c1,col=(1,0,1))
    # for tgt in (ATET,AOCT,AICS):
-   # 	for ang in rotation_around_dof_to_set_vec_vec_angle(Haxis,tgt,a1,a2):
-   # 		rot = rotation_around_degrees(Haxis,ang,Vec(0,0,0))
-   # 		a2rot = rot*a2
-   # 		c2rot = rot*c2
-   # 		atest = angle_degrees(a1,Vec(0,0,0),a2rot)
-   # 		if abs(tgt-atest) > 0.000001 and abs(180-tgt-atest) > 0.000001:
-   # 			print "ERROR!!!!!!!!!!!!!"
-   # 			continue
-   # 		d = slide_to_make_lines_intersect(Haxis,a2rot,c2rot,a1,c1)
-   # 		anew = rot*a2
-   # 		cnew = rot*c2 + d*Haxis
-   # 		print "%-07.3f %-07.3f %-07.3f %-07.3f "%(atest,ang,d,atest)
-   # 		showline(anew*10,cnew)
+   #  for ang in rotation_around_dof_to_set_vec_vec_angle(Haxis,tgt,a1,a2):
+   #     rot = rotation_around_degrees(Haxis,ang,Vec(0,0,0))
+   #     a2rot = rot*a2
+   #     c2rot = rot*c2
+   #     atest = angle_degrees(a1,Vec(0,0,0),a2rot)
+   #     if abs(tgt-atest) > 0.000001 and abs(180-tgt-atest) > 0.000001:
+   #        print "ERROR!!!!!!!!!!!!!"
+   #        continue
+   #     d = slide_to_make_lines_intersect(Haxis,a2rot,c2rot,a1,c1)
+   #     anew = rot*a2
+   #     cnew = rot*c2 + d*Haxis
+   #     print "%-07.3f %-07.3f %-07.3f %-07.3f "%(atest,ang,d,atest)
+   #     showline(anew*10,cnew)
    # cmd.set_view(v)
 
 def testhelix(filepattern="/work/sheffler/sym_comp/C2/*.pdb.gz", minlen=10, sele="all"):

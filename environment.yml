@@ -1,0 +1,13 @@
+name: pymol
+channels:
+ - conda-forge
+ - schrodinger
+dependencies:
+ - python>=3.7
+ - numpy
+ - pymol>=2
+ - yapf
+ - yapf
+ - pip 
+ - pip:
+   - -e .

@@ -1,4 +1,4 @@
-from pymol_util import *
+from wills_pymol_crap.pymol_util import *
 from math import *
 
 def drawtetra():
@@ -62,20 +62,20 @@ def drawbcc(N=2, scale=1.0, col=(1, 1, 1)):
    cgo += drawcells(E, col=col, CR=0.54 * scale)
 
    # for p in P:
-   # 	R = 0.2 if p.z%1==0 else 0.15
-   # 	showsphere(p,r=R,col=(1.0-p.z/h/N,((p.z+1)/h/N)%1.0,p.z/h/N)) # cov rad .56
-   # 	showsphere(p,r=0.1,col=(1.0,1.0,1.0))
-   # 	pass
+   #  R = 0.2 if p.z%1==0 else 0.15
+   #  showsphere(p,r=R,col=(1.0-p.z/h/N,((p.z+1)/h/N)%1.0,p.z/h/N)) # cov rad .56
+   #  showsphere(p,r=0.1,col=(1.0,1.0,1.0))
+   #  pass
    # for p,q in E:
-   # 	# dis = p.distance(q)
-   # 	# if 0.99 < dis < 1.01: showlineabs(p,q,col=(0.3,0.3,0.3))
-   # 	cen = (p+q)/2.0
-   # 	P2.append(cen)
-   # 	# nrm = (p-q).normalized()
-   # 	# R = 0.1 if 0.99<dis<1.01 else 0.066
-   # 	# showsphere(cen,r=R)
-   # 	# print >>o, "ATOM %6i CUBE CUB %5i       %03.3f   %03.3f   %03.3f  1.00  1.00"%(count,count,x,y,z)
-   # 	# count += 1
+   #  # dis = p.distance(q)
+   #  # if 0.99 < dis < 1.01: showlineabs(p,q,col=(0.3,0.3,0.3))
+   #  cen = (p+q)/2.0
+   #  P2.append(cen)
+   #  # nrm = (p-q).normalized()
+   #  # R = 0.1 if 0.99<dis<1.01 else 0.066
+   #  # showsphere(cen,r=R)
+   #  # print >>o, "ATOM %6i CUBE CUB %5i       %03.3f   %03.3f   %03.3f  1.00  1.00"%(count,count,x,y,z)
+   #  # count += 1
    # E2 = [(p,q) for p in P2 for q in P2 if p is not q and p.distance(q) < 0.55]
    # drawcells(E2,col=(0.0,0.0,1.0),CR=0.27)
    cmd.load_cgo(cgo, "bcc" + str(N))

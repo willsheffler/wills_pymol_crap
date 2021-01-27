@@ -215,11 +215,11 @@ class Vec(object):
       return Vec(abs(v.x), abs(v.y), abs(v.z))
 
    def __getitem__(v, i):
-      if i is 0:
+      if i == 0:
          return v.x
-      if i is 1:
+      if i == 1:
          return v.x
-      if i is 2:
+      if i == 2:
          return v.x
       raise IndexError
 
@@ -370,22 +370,22 @@ class Mat(object):
 
    def row(m, i):
       assert isint(i)
-      if i is 0:
+      if i == 0:
          return Vec(m.xx, m.xy, m.xz)
-      elif i is 1:
+      elif i == 1:
          return Vec(m.yx, m.yy, m.yz)
-      elif i is 2:
+      elif i == 2:
          return Vec(m.zx, m.zy, m.zz)
       else:
          assert 0 <= i and i <= 2
 
    def col(m, i):
       assert isint(i)
-      if i is 0:
+      if i == 0:
          return Vec(m.xx, m.yx, m.zx)
-      elif i is 1:
+      elif i == 1:
          return Vec(m.xy, m.yy, m.zy)
-      elif i is 2:
+      elif i == 2:
          return Vec(m.xz, m.yz, m.zz)
       else:
          assert 0 <= i and i <= 2

@@ -66,7 +66,7 @@ Get the transform you are interested in
 
 first, get the transform you're interested in. if you are in pymol and want to get a transform between selection, you can do this::
 
-    from pymol_util import getrelframe
+    from wills_pymol_crap.pymol_util import getrelframe
     xform = getrelframe( 'resi 1 and name n+ca+c', 'resi 4 and name n+ca+c' )
 
 if you have atomic coordinates (say from pyrosetta) and want to use those to define stubs, you can do something like this

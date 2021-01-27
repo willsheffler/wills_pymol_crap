@@ -3,6 +3,12 @@
 	[
 		{
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "test_robby_p4",
+
+			"shell_cmd": "cd $folder && pwd && python wills_pymol_crap/examples/robby_p4.py &> log/subl_build.log"
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "run_tox",
 			"shell_cmd": "cd $folder && tox 2>&1 | tee log/subl_build.log"
 		},
