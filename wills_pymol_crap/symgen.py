@@ -165,11 +165,11 @@ class SymElem(object):
             col[0],
             col[1],
             col[2],
-            pymol.cgo.SPHERE,
-            c.x,
-            c.y,
-            c.z,
-            sphereradius
+            # pymol.cgo.SPHERE,
+            # c.x,
+            # c.y,
+            # c.z,
+            # sphereradius
          ])
          if self.kind.startswith("D"):
             for i in range(self.nfold):
@@ -624,7 +624,7 @@ import functools
 
 # run /Users/sheffler/pymol/una.py; make_d3oct("test*","o33*",depth=3)
 
-def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9):
+def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9, verbose=False):
    v = cmd.get_view()
    cmd.delete(newobj)
    sele = "((" + sele + ") and (not TMP_makesym_*))"
@@ -683,7 +683,7 @@ def mofview():
    cmd.hide('ev')
    # cmd.show('sti')
    #cmd.show('lines', 'name n+ca+c')
-   cmd.show('sti', 'resn asp+das+cys+dcs+his+dhi+glu+dgu+zn and not hydro and not name n+c+o')
+   cmd.show('sti', 'resn asp+das+cys+dcs+his+dhi+glu+dgu+zn+bpy and not hydro and not name n+c+o')
    # cmd.show('sti', 'resn cys and name HG')
    cmd.show('sph', 'name ZN')
 
@@ -839,7 +839,7 @@ class BuildCGO(object):
                 arrowlen=10.0, **kwargs):
       super(BuildCGO, self).__init__()
       self.nodes = nodes
-      self.CGO = cgo_sphere(Vec(0, 0, 0), 3.0)
+      self.CGO = list()  #cgo_sphere(Vec(0, 0, 0), 3.0)
       self.jumps = set()
       self.maxrad = maxrad
       self.origin = origin
@@ -1073,7 +1073,8 @@ class ComponentCenterVisitor(object):
       for priCC, CClist in list(self.priCCtoCClist.items()):
          for i1, n1 in enumerate(CClist):
             if n1 not in list(self.parentmap.keys()):
-               if verbose: print("NOT IN PARENTMAP:", n1)
+               pass
+               # if verbose: print("NOT IN PARENTMAP:", n1)
             for i2, n2 in enumerate(CClist):
                assert (i1 == i2) == (n1 == n2)  # xor
       for priCC, CCframes in list(self.priCCtoCCframes.items()):
@@ -1081,7 +1082,7 @@ class ComponentCenterVisitor(object):
             for stn in STNs:
                assert stn.position * priCC == CC
 
-   def show(self, component_pos=(Vec(3, 11, 9), Vec(11, 3, 9), Vec(11, 9, 3), Vec(9, 3, 11)),
+   def show(self, component_pos=(Vec(0, -4, 4), Vec(0, 3, 3), Vec(11, 9, 3), Vec(9, 3, 11)),
             showframes=True, **kwargs):
       self.sanity_check()
       if not self.parentmap:
@@ -1090,9 +1091,9 @@ class ComponentCenterVisitor(object):
       for ipn, itms in enumerate(self.priCCtoCClist.items()):
          pn, CClist = itms
          for n in CClist:
-            CGO.extend(cgo_sphere(n, r=2.2, col=self.colors[ipn]))
-            if n in list(self.parentmap.keys()) and self.parentmap[n] and self.showlinks:
-               CGO.extend(cgo_cyl_arrow(self.parentmap[n], n, r=0.8, col=self.colors[ipn]))
+            # CGO.extend(cgo_sphere(n, r=2.2, col=self.colors[ipn]))
+            # if n in list(self.parentmap.keys()) and self.parentmap[n] and self.showlinks:
+            # CGO.extend(cgo_cyl_arrow(self.parentmap[n], n, r=0.8, col=self.colors[ipn]))
             if showframes and ipn < len(component_pos):
                for stn in self.priCCtoCCframes[pn][n]:
                   cn = stn.position * (pn + component_pos[ipn])
@@ -1103,14 +1104,18 @@ class ComponentCenterVisitor(object):
                   CGO.extend(cgo_sphere(cn, r=2.5, col=self.colors[ipn]))
                   CGO.extend(cgo_sphere(cnx, r=1.7, col=self.colors[ipn]))
                   CGO.extend(cgo_sphere(cny, r=1.2, col=self.colors[ipn]))
-                  if self.showlinks or True:
-                     CGO.extend(cgo_cyl_arrow(n, cn, r=0.3, col=self.colors[ipn], arrowlen=2.0))
+                  # if self.showlinks or True:
+                  # CGO.extend(cgo_cyl_arrow(n, cn, r=0.3, col=self.colors[ipn], arrowlen=2.0))
       v = cmd.get_view()
       cmd.delete(self.label)
       cmd.load_cgo(CGO, self.label)
       cmd.set_view(v)
 
    def make_symdef(self, **kwargs):
+
+      if 'one_component' not in kwargs:
+         kwargs['one_component'] = False
+
       XYZ_TEMPLATE = r"xyz  %-30s  %+012.9f,%+012.9f,%+012.9f  %+012.9f,%+012.9f,%+012.9f  %+014.9f,%+014.9f,%+014.9f" + "\n"
       if not self.parentmap:
          self.makeCCtree()
@@ -1237,7 +1242,7 @@ class ComponentCenterVisitor(object):
       for SUBname, x in SUBs[0]:
          p = SUBname
          c = "SUBUNIT A"
-         if kwargs[f'one_component']:
+         if kwargs['one_component']:
             c = "SUBUNIT"
          jname = "JUMP__%s__to__%s" % (p, c.replace(" ", ""))
          s += "connect_virtual %-57s %-25s %-25s\n" % (jname, p, c)
@@ -1271,8 +1276,9 @@ class ComponentCenterVisitor(object):
       s += "connect_virtual DUMMY_JUMP CMP00_CEN000 DUMMY_VIRT\n"
       s += "set_dof DUMMY_JUMP x\n\n"
 
-      s += "################# CELL DOFs ############################\n\n"
-      s += "set_dof   JUMP__%s__to__%s   x\n\n" % celldofjumps[0]
+      if len(celldofjumps) > 0:
+         s += "################# CELL DOFs ############################\n\n"
+         s += "set_dof   JUMP__%s__to__%s   x\n\n" % celldofjumps[0]
 
       s += "################# COMPONENT DOFs ############################\n\n"
       for icomp, dofs in enumerate(compdofjumps):

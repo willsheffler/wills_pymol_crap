@@ -15,6 +15,7 @@ def test_xtal(
    symdef=1,
    shownodes=1,
    verbose=False,
+   showcell=False,
    **kw,
 ):
    v = cmd.get_view()
@@ -56,7 +57,108 @@ def test_xtal(
    count = CountFrames()
    symtrie.visit(count)
    if verbose: print("N Frames:", count.count)
+
+   if showcell:
+      cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
+
    cmd.set_view(v)
+
+def make_D4_2(cell=100, **kw):
+   '''delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; make_D4_2(depth=2, )'''
+   X = alignvectors(Vec(1, 1, 1), Vec(1, 0, -1), Vec(0, 0, 1), Vec(1, 0, 0))
+   G = [
+      SymElem("C4", axis=Vec(1, 0, 1), cen=Vec(0, 0, 0)),
+      SymElem("C2", axis=Vec(1, 0, 0), cen=Vec(0, 0, 0)),
+   ]
+   test_xtal(G, cell, tag="D4_2", one_component=True, **kw)
+
+def test_P213(cell=70, **kw):
+   # P213   C3 -0.57735,0.57735,0.57735   -  -0.5,-0.5,0 C3 0.57735,0.57735,0.57735 -  -0.333333,-0.333333,0.666667  70.5288  0.353553 -
+   'delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_P213(depth=2)'
+   # AXS = [Vec(1, 1, 1), Vec(1, 1, -1)]
+   # CEN = [cell * Vec(0, 0, 0), cell * Vec(0.5, 0, 0.0)]
+   AXS, CEN = [], []
+   AXS.append(Vec(-0.57735, 0.57735, 0.57735))
+   CEN.append(Vec(-0.5, -0.5, 0) * cell)
+   AXS.append(Vec(0.57735, 0.57735, 0.57735))
+   # CEN.append(Vec(0.333333, -0.333333, 0.666667) * cell) # straight from franks table... WTF???
+   CEN.append(Vec(0, 0, 0) * cell)
+   G = [
+      SymElem("C3", axis=AXS[0], cen=CEN[0], col=[1, 0.7, 0.0]),
+      SymElem("C3", axis=AXS[1], cen=CEN[1], col=[0.1, 0.5, 1]),
+   ]
+   test_xtal(
+      G,
+      cell,
+      tag="P213",
+      origin=cell * Vec(0.0, 0.0, 0.0),
+      showshape=0,
+      symdef=0,
+      showlinks=0,
+      radius=0.5,
+      # length=40,
+      **kw,
+   )
+
+def test_P4132(cell=100, **kw):
+   # P4132 C2 0,-0.707107,0.707107 -  0.375,-0.125,-0.125  C3 0.57735,-0.57735,0.57735   -  0.333333,0.166667,-0.166667   35.2644  0.176777 -
+   'delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_P4132(depth=2)'
+   AXS, CEN = [], []
+   AXS.append(Vec(0, -0.707107, 0.707107))
+   CEN.append(Vec(0.375, -0.125, -0.125) * cell)
+   # AXS.append(Vec(0.57735, -0.57735, 0.57735)),
+   # CEN.append(Vec(0.333333, 0.166667, -0.166667) * cell)
+   AXS.append(Vec(0.57735, -0.57735, 0.57735)),
+   CEN.append(Vec(0.333333, 0.166667, -0.166667) * cell)
+   # CEN.append(Vec(0, 0, 0) * cell)
+   G = [
+      SymElem("C2", axis=AXS[0], cen=CEN[0], col=[1, 0.7, 0.0]),
+      SymElem("C3", axis=AXS[1], cen=CEN[1], col=[0.1, 0.5, 1]),
+   ]
+   test_xtal(
+      G,
+      cell,
+      tag="P4132",
+      origin=cell * Vec(0.0, 0.0, 0.0),
+      showshape=0,
+      symdef=0,
+      showlinks=0,
+      radius=0.5,
+      # length=40,
+      **kw,
+   )
+   cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
+
+def test_P4132_old(depth=8, cell=50, maxrad=80):
+   # delete all; run /home/sheffler/pymol3/symgen_test.py; test_P4132(depth=8, cell=50, maxrad=80)
+   # **** P4132 ****
+   # C2 and C3 at angle = 35.2644 offset = 0.176777
+   #     C2 axis=[-0.707107,0.707107,0]  origin=[-0.125,-0.125,-0.125]
+   #     C3 axis=[0.57735,-0.57735,0.57735]  origin=[0,-0.5,-0.5]
+   AXS = [Vec(-1, 1, 0), Vec(1, -1, 1)]
+   CEN = [cell * Vec(1, 1, 1) / -8.0, cell * Vec(0, 1, 1) / -2.0]
+   # AXS = [ Vec(-1, 1, 0) ,
+   #         Vec( 1, 1, 1) ]
+   # CEN = [ cell * Vec(1,1,1)/-8.0,
+   #         cell * Vec(0,0,0) ]
+   G = [SymElem("C2", axis=AXS[0], cen=CEN[0]), SymElem("C3", axis=AXS[1], cen=CEN[1])]
+   symtrie = generate_sym_trie(G, depth=depth)
+   # buildcgo = BuildCGO( nodes=[ CEN1+Vec(2,3,4), CEN2+Vec(2,4,3), ] )
+   cencell = cell / 2.0 * Vec(1, 1, 1)
+   buildcgo = BuildCGO(
+      nodes=[CEN[1] + randnorm() * 5.0, CEN[0] + randnorm() * 8.0],
+      origin=cencell,
+      maxrad=maxrad,
+      showlinks=False,
+      showelems=True,
+   )
+   symtrie.visit(buildcgo)
+   buildcgo.show()
+   cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
+   for g in G:
+      print("show", g)
+      g.show(radius=2.0, sphereradius=4.0)
+   return AXS, CEN
 
 # def test_P23_D2TET(depth=6, cell=60, **kw):
 #    G = [
@@ -84,7 +186,7 @@ def test_xtal(
 #       g.show(radius=2.0, sphereradius=4.0)
 
 # def test_F23_TETC2(cell=100, **kw):
-#    # run /home/sheffler/pymol3/symgen_test.py; delete all; test_F23_TETC2(depth=3, symdef_scale=0.00001, generic_names=1)
+#    #   )
 #    G = [
 #       SymElem("T", axis=Vec(1, 1, 1)),
 #       SymElem("C2", axis=Vec(0, 0, 1), cen=Vec(cell / 4.0, cell / 4.0, 0)),
@@ -127,18 +229,30 @@ def test_xtal(
 #    symtrie.visit(buildcgo)
 #    buildcgo.show()
 
-# def test_I432_OD3(cell=120, **kw):
-#    X = alignvectors(Vec(1, 1, 1), Vec(1, 0, -1), Vec(0, 0, 1), Vec(1, 0, 0))
-#    # G = [ SymElem( "O" , cen=cell*Vec(0.0,0.0,0.0) ),
-#    # SymElem( "D3", cen=cell*Vec(0.25,0.25,0.25), axis=Vec(1,1,1), axis2=Vec(1,-1,0) ), ]
-#    # cube( cell*Vec(-0.5,-0.5,-0.5), cell*Vec(0.5,0.5,0.5) )
-#    G = [
-#       SymElem("D3", cen=cell * Vec(0.0, 0.0, 0.0)),
-#       SymElem("O", cen=cell * Vec(0.0, 0.0,
-#                                   sqrt(3.0) / 4.0), input_xform=X),
-#    ]
-#    cube(cell * Vec(-0.25, -0.25, -0.25), cell * Vec(0.75, 0.75, 0.75), xform=X)
-#    test_xtal(G, cell, tag="I432_OD3", **kw)
+def test_I432_OD3(cell=120, **kw):
+   X = alignvectors(Vec(1, 1, 1), Vec(1, 0, -1), Vec(0, 0, 1), Vec(1, 0, 0))
+   G = [
+      SymElem("D3", cen=cell * Vec(0.0, 0.0, 0.0)),
+      SymElem("O", cen=cell * Vec(0.0, 0.0,
+                                  sqrt(3.0) / 4.0), input_xform=X),
+   ]
+   cube(cell * Vec(-0.25, -0.25, -0.25), cell * Vec(0.75, 0.75, 0.75), xform=X)
+   test_xtal(G, cell, tag="I432_OD3", one_component=True, **kw)
+
+def test_octa(cell=100, **kw):
+   X = alignvectors(Vec(1, 1, 1), Vec(1, 0, -1), Vec(0, 0, 1), Vec(1, 0, 0))
+   G = [
+      SymElem("D3", axis=Vec(1, 0, 0), axis2=Vec(0, -1, 1), cen=cell * Vec(0.0, 0.25, 0.25)),
+      SymElem("O", cen=cell * Vec(0.0, 0.0, 0), input_xform=X),
+   ]
+   cube(cell * Vec(-0.25, -0.25, -0.25), cell * Vec(0.75, 0.75, 0.75))
+   test_xtal(G, cell, tag="I432_OD3", one_component=True, **kw)
+
+# F432  O  0.57735, 0.57735,0.57735   0,0,0       D2  1,0,0 0,-0.707107,0.707107 0,0.25,0.25
+# F432  O  0.57735,-0.57735,0.57735   0,-0.5,-0.5 D2 -0.707107,0.707107,0 0.707107,0.707107,0  -1,0,0
+# F432  O  0.57735,-0.57735,0.57735   0,-0.5,-0.5 D3 -0.707107,0.707107,0 0.57735,0.57735,0.57735
+# I432  O  0.57735, 0.57735,0.57735   0,0,0       D3  0,-0.707107,0.707107 0.57735,0.57735,0.57735
+# F432  O  0.57735,-0.57735,0.57735   0,-0.5,-0.5 D4  0.707107,0.707107,0  0,0,1 0,0,-0.5 90 0.204124 -
 
 # def test_P23_TT(cell=100, **kw):
 #    # delete all; run ~/pymol/symgen.py; test_P23_TD2B( depth=2, cell=200,
@@ -350,16 +464,7 @@ def test_xtal(
 #    # cube( cell*Vec(-0.5,-0.5,-0.5), cell*Vec(0.5,0.5,0.5) )
 #    cube(cell * Vec(-0, -0, -0), cell * Vec(1, 1, 1))
 
-# def test_P213(cell=100, **kw):
-#    AXS = [Vec(1, 1, 1), Vec(1, 1, -1)]
-#    CEN = [cell * Vec(0, 0, 0), cell * Vec(0.5, 0, 0.0)]
-#    G = [SymElem("C3", axis=AXS[0], cen=CEN[0]), SymElem("C3", axis=AXS[1], cen=CEN[1])]
-
-#    component_pos = [Vec(-18, -17, -16), Vec(7, 0, 11)]
-
-#    test_xtal(G, cell, tag="P213", origin=cell * Vec(0.0, 0.0, 0.0), showshape=0, **kw)
-
-#    cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
+# cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
 
 # def test_T32(cell=100, **kw):
 #    print(
@@ -399,36 +504,36 @@ def test_xtal(
 #       g.show(radius=2.0, sphereradius=4.0)
 #    return AXS, CEN
 
-# def test_P4132(depth=8, cell=50, maxrad=80):
-#    # **** P4132 ****
-#    # C2 and C3 at angle = 35.2644 offset = 0.176777
-#    #     C2 axis=[-0.707107,0.707107,0]  origin=[-0.125,-0.125,-0.125]
-#    #     C3 axis=[0.57735,-0.57735,0.57735]  origin=[0,-0.5,-0.5]
-#    AXS = [Vec(-1, 1, 0), Vec(1, -1, 1)]
-#    CEN = [cell * Vec(1, 1, 1) / -8.0, cell * Vec(0, 1, 1) / -2.0]
-#    # AXS = [ Vec(-1, 1, 0) ,
-#    #         Vec( 1, 1, 1) ]
-#    # CEN = [ cell * Vec(1,1,1)/-8.0,
-#    #         cell * Vec(0,0,0) ]
-#    G = [SymElem("C2", axis=AXS[0], cen=CEN[0]), SymElem("C3", axis=AXS[1], cen=CEN[1])]
-#    symtrie = generate_sym_trie(G, depth=depth)
-#    # buildcgo = BuildCGO( nodes=[ CEN1+Vec(2,3,4), CEN2+Vec(2,4,3), ] )
-#    cencell = cell / 2.0 * Vec(1, 1, 1)
-#    buildcgo = BuildCGO(
-#       nodes=[CEN[1] + randnorm() * 5.0, CEN[0] + randnorm() * 8.0],
-#       origin=cencell,
-#       maxrad=maxrad,
-#       showlinks=False,
-#       showelems=True,
-#    )
-#    symtrie.visit(buildcgo)
-#    buildcgo.show()
-
-#    cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
-#    for g in G:
-#       print("show", g)
-#       g.show(radius=2.0, sphereradius=4.0)
-#    return AXS, CEN
+def test_P4132_old(depth=8, cell=50, maxrad=80):
+   # delete all; run /home/sheffler/pymol3/symgen_test.py; test_P4132(depth=8, cell=50, maxrad=80)
+   # **** P4132 ****
+   # C2 and C3 at angle = 35.2644 offset = 0.176777
+   #     C2 axis=[-0.707107,0.707107,0]  origin=[-0.125,-0.125,-0.125]
+   #     C3 axis=[0.57735,-0.57735,0.57735]  origin=[0,-0.5,-0.5]
+   AXS = [Vec(-1, 1, 0), Vec(1, -1, 1)]
+   CEN = [cell * Vec(1, 1, 1) / -8.0, cell * Vec(0, 1, 1) / -2.0]
+   # AXS = [ Vec(-1, 1, 0) ,
+   #         Vec( 1, 1, 1) ]
+   # CEN = [ cell * Vec(1,1,1)/-8.0,
+   #         cell * Vec(0,0,0) ]
+   G = [SymElem("C2", axis=AXS[0], cen=CEN[0]), SymElem("C3", axis=AXS[1], cen=CEN[1])]
+   symtrie = generate_sym_trie(G, depth=depth)
+   # buildcgo = BuildCGO( nodes=[ CEN1+Vec(2,3,4), CEN2+Vec(2,4,3), ] )
+   cencell = cell / 2.0 * Vec(1, 1, 1)
+   buildcgo = BuildCGO(
+      nodes=[CEN[1] + randnorm() * 5.0, CEN[0] + randnorm() * 8.0],
+      origin=cencell,
+      maxrad=maxrad,
+      showlinks=False,
+      showelems=True,
+   )
+   symtrie.visit(buildcgo)
+   buildcgo.show()
+   cube(Vec(0, 0, 0), cell * Vec(1, 1, 1))
+   for g in G:
+      print("show", g)
+      g.show(radius=2.0, sphereradius=4.0)
+   return AXS, CEN
 
 # def test_F432(depth=6, cell=100, maxrad=90):
 #    # C3 and D2 at angle = 35.2644 offset = 0

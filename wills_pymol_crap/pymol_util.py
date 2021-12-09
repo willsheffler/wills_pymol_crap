@@ -24,6 +24,7 @@ import xyzMath as xyz
 from xyzMath import Ux, Uy, Uz, Imat
 from functools import partial
 import cProfile
+from pymol.cgo import BEGIN, LINES, COLOR, VERTEX, END
 
 try:
    import pymol
@@ -214,9 +215,10 @@ aa_types = {
 def showaxes():
    v = cmd.get_view()
    obj = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 20.0,
-      0.0, 0.0, cgo.COLOR, 0.0, 1.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 0.0, 20.0, 0.0,
-      cgo.COLOR, 0.0, 0.0, 1.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 00, 0.0, 20.0, cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX,
+      100.0, 0.0, 0.0, cgo.COLOR, 0.0, 1.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 0.0,
+      100.0, 0.0, cgo.COLOR, 0.0, 0.0, 1.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 00, 0.0, 100.0,
+      cgo.END
    ]
    cmd.load_cgo(obj, "axes")
    cmd.set_view(v)
@@ -386,6 +388,16 @@ def showsegment(c1, c2, col=(1, 1, 1), lbl=""):
    #                 c2.x,     c2.y,     c2.z, 0.02,
    #         col[0],col[1],col[2],col[0],col[1],col[2],], lbl)
    cmd.set_view(v)
+
+#def showcircle(cen, r, w, col=(1, 1, 1), lbl=""):
+#   if not lbl:
+#      global numseg
+#      lbl = "seg%i" % numseg
+#      numseg += 1
+#   cmd.delete(lbl)
+#   v = cmd.get_view()
+#   cmd.load_cgo(cgo_circle(cen, r, w, xform, col), lbl)
+#   cmd.set_view(v)
 
 def cgo_cyl(c1, c2, r, col=(1, 1, 1), col2=None):
    if not col2:
@@ -1907,6 +1919,7 @@ def process_native():
 
 MOVE_UP_DOWN_SPECIAL_OBJS = [
    "axes",
+   'tgt',
    "ref",
    "UNIT_CELL",
    "line0",
@@ -1969,6 +1982,9 @@ def move_up():
    # cmd.zoom( " or ".join(my_get_obj(enabled_only=True)), complete=True, buffer=3.0 )
    # cmd.orient
 
+cmd.set_key("pgup", move_up)
+cmd.set_key("pgdn", move_down)
+
 def cbow(sel="all"):
    for i in cmd.get_object_list():
       util.chainbow("((%s) and (%s))" % (i, sel))
@@ -1983,9 +1999,6 @@ cmd.extend("axes", showaxes)
 cmd.extend("useRosettaRadii", useRosettaRadii)
 cmd.extend("expandRadii", expandRadii)
 cmd.extend("contractRadii", contractRadii)
-
-cmd.set_key("pgup", move_up)
-cmd.set_key("pgdn", move_down)
 
 def print_chains(sele="all"):
    for o in cmd.get_object_list(sele):
