@@ -81,6 +81,21 @@ class Vec(object):
       assert isfloat(self.y)
       assert isfloat(self.z)
 
+   def squeeze(self):
+      return self
+
+   def __getitem__(self, i):
+      if i == 0: return self.x
+      if i == 1: return self.y
+      if i == 2: return self.z
+      raise IndexError
+
+   def __setitem__(self, i, v):
+      if i == 0: self.x = v
+      if i == 1: self.y = v
+      if i == 2: self.z = v
+      raise IndexError
+
    def __hash__(self):
       return hash((self.x, self.y, self.z))
 
@@ -213,15 +228,6 @@ class Vec(object):
 
    def abs(v):
       return Vec(abs(v.x), abs(v.y), abs(v.z))
-
-   def __getitem__(v, i):
-      if i == 0:
-         return v.x
-      if i == 1:
-         return v.x
-      if i == 2:
-         return v.x
-      raise IndexError
 
    def tuple(v):
       return (v.x, v.y, v.z)

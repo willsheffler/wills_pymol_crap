@@ -18,6 +18,7 @@ def test_xtal(
    showcell=False,
    **kw,
 ):
+   print('test_xtal')
    v = cmd.get_view()
    CEN = [g.cen for g in G]
    FN = list()
@@ -29,7 +30,7 @@ def test_xtal(
       if "component_pos" in list(kw.keys()):
          raise NotImplementedError("component_pos is no longer used")
          # nodes = kw["component_pos"][:1]
-      buildcgo = BuildCGO(nodes=nodes, label=tag + "_DEPTH%i" % d, **kw)
+      buildcgo = BuildCGO(nodes=nodes, label=tag + "_DEPTH%i" % d, cell=cell, **kw)
       symtrie.visit(buildcgo)
       buildcgo.show()
       if shownodes:
@@ -63,18 +64,40 @@ def test_xtal(
 
    cmd.set_view(v)
 
-def make_D4_2(cell=100, **kw):
-   '''delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; make_D4_2(depth=2, )'''
-   X = alignvectors(Vec(1, 1, 1), Vec(1, 0, -1), Vec(0, 0, 1), Vec(1, 0, 0))
+# I213
+#    AXS = [Vec(1, 1, 1), Vec(1, 0, 0)]
+#    CEN = [cell * Vec(0, 0, 0), cell * Vec(0, 0, 0.25)]
+
+def test_I213(cell=70, **kw):
+   'delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_I213(depth=5,mindepth=5,cell=10)'
+   # AXS = [Vec(1, 1, 1), Vec(1, 1, -1)]
+   # CEN = [cell * Vec(0, 0, 0), cell * Vec(0.5, 0, 0.0)]
    G = [
-      SymElem("C4", axis=Vec(1, 0, 1), cen=Vec(0, 0, 0)),
-      SymElem("C2", axis=Vec(1, 0, 0), cen=Vec(0, 0, 0)),
+      SymElem("C2", axis=Vec(1, 0, 0), cen=Vec(0, 0, 0.25) * cell, col=[1, 0.7, 0.0]),
+      SymElem("C3", axis=Vec(1, 1, 1) * 0.57735, cen=Vec(0, 0, 0) * cell, col=[0.1, 0.5, 1]),
    ]
-   test_xtal(G, cell, tag="D4_2", one_component=True, **kw)
+
+   test_xtal(
+      G,
+      cell,
+      tag="I213",
+      origin=cell * Vec(0.0, 0.0, 0.0),
+      showshape=0,
+      symdef=0,
+      make_symdef=0,
+      showlinks=1,
+      shownodes=1,
+      radius=0.5,
+      bbox=[Vec(-1, -1, -1) * -999,
+            Vec(cell + 1, cell + 1, cell + 1) * 100],
+      # length=40,
+      **kw,
+   )
+   showcube(Vec(0, 0, 0), Vec(1, 1, 1) * cell)
 
 def test_P213(cell=70, **kw):
    # P213   C3 -0.57735,0.57735,0.57735   -  -0.5,-0.5,0 C3 0.57735,0.57735,0.57735 -  -0.333333,-0.333333,0.666667  70.5288  0.353553 -
-   'delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_P213(depth=2)'
+   'delete all; run ~/pymol3/pymol_util.py; ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_P213(depth=2)'
    # AXS = [Vec(1, 1, 1), Vec(1, 1, -1)]
    # CEN = [cell * Vec(0, 0, 0), cell * Vec(0.5, 0, 0.0)]
    AXS, CEN = [], []
@@ -93,8 +116,9 @@ def test_P213(cell=70, **kw):
       tag="P213",
       origin=cell * Vec(0.0, 0.0, 0.0),
       showshape=0,
-      symdef=0,
-      showlinks=0,
+      symdef=1,
+      make_symdef=1,
+      showlinks=1,
       radius=0.5,
       # length=40,
       **kw,

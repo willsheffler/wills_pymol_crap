@@ -4,15 +4,22 @@ import itertools
 import re
 import os
 import inspect
-from wills_pymol_crap.pymol_util import cgo_cyl, pymol
+from wills_pymol_crap.pymol_util import cgo_cyl, pymol, pdb_format_atom
 from pymol import cmd
 
 symelem_nshow = 0
 
 class SymElem(object):
    """docstring for SymElem"""
-   def __init__(self, kind, axis=Vec(0, 0, 1), cen=Vec(0, 0, 0), axis2=Vec(1, 0, 0), col=None,
-                input_xform=None):
+   def __init__(
+         self,
+         kind,
+         axis=Vec(0, 0, 1),
+         cen=Vec(0, 0, 0),
+         axis2=Vec(1, 0, 0),
+         col=None,
+         input_xform=None,
+   ):
       super(SymElem, self).__init__()
       self.kind = kind
       self.axis = axis.normalized()
@@ -106,7 +113,15 @@ class SymElem(object):
       pymol.cmd.load_cgo(CGO, label)
       pymol.cmd.set_view(v)
 
-   def cgo(self, length=20.0, radius=0.5, sphereradius=1.5, col=None, showshape=0, **kwargs):
+   def cgo(
+      self,
+      length=20.0,
+      radius=0.5,
+      sphereradius=1.5,
+      col=None,
+      showshape=0,
+      **kwargs,
+   ):
       if not col and self.col:
          col = self.col
       CGO = []
@@ -834,9 +849,18 @@ def cgo_cyl_arrow(c1, c2, r, col=(1, 1, 1), col2=None, arrowlen=4.0):
 
 class BuildCGO(object):
    """docstring for BuildCGO"""
-   def __init__(self, nodes, maxrad=9e9, origin=Vec(0, 0, 0), bbox=(Vec(
-      -9e9, -9e9, -9e9), Vec(9e9, 9e9, 9e9)), showlinks=False, showelems=True, label="BuildCGO",
-                arrowlen=10.0, **kwargs):
+   def __init__(
+      self,
+      nodes,
+      maxrad=9e9,
+      origin=Vec(0, 0, 0),
+      bbox=[Vec(-9e9, -9e9, -9e9), Vec(9e9, 9e9, 9e9)],
+      showlinks=False,
+      showelems=True,
+      label="BuildCGO",
+      arrowlen=10.0,
+      **kwargs,
+   ):
       super(BuildCGO, self).__init__()
       self.nodes = nodes
       self.CGO = list()  #cgo_sphere(Vec(0, 0, 0), 3.0)
@@ -862,8 +886,22 @@ class BuildCGO(object):
          (0.5, 0.5, 0.5),
       ]
       self.kwargs = kwargs
+      if self.bbox[0].x < self.bbox[1].x:
+         self.bbox[0].x, self.bbox[1].x = self.bbox[1].x, self.bbox[0].x
+      if self.bbox[0].y < self.bbox[1].y:
+         self.bbox[0].y, self.bbox[1].y = self.bbox[1].y, self.bbox[0].y
+      if self.bbox[0].z < self.bbox[1].z:
+         self.bbox[0].z, self.bbox[1].z = self.bbox[1].z, self.bbox[0].z
+
+      self.num_pdb_res_output = 0
+      self.pdbout = open(f'BuildCGO_{random.random()}.pdb', 'w')
+      cell = float(kwargs['cell'])
+      self.pdbout.write(
+         f'CRYST1  {cell:7.3}  {cell:7.3}  {cell:7.3}  90.00  90.00  90.00 I 21 3        4')
 
    def bounds_check(self, v):
+      return True
+      # print('bounsds check', v)
       if self.origin.distance(v) > self.maxrad:
          return False
       if not self.bbox[0].x <= v.x <= self.bbox[1].x:
@@ -883,7 +921,7 @@ class BuildCGO(object):
          pcen = px * self.nodes[-1]
          # pcen = px*self.nodes[0]
 
-      # show "nodes"
+      # print(f'symgen.py show {len(self.nodes)} nodes')
       for icen, cen in enumerate(self.nodes):
          xcen = x * cen
          if pcen:
@@ -902,6 +940,20 @@ class BuildCGO(object):
                             text="%s%i" % ("ABCD"[icen], node.depth), icol=icen)
          pcen = xcen
 
+      # yapf: disable
+      c = Vec(1,3,7)
+      pdblines = [
+         pdb_format_atom(an='O', ia=1, ir=self.num_pdb_res_output, xyz=x * (c+Vec(0,0,0)), elem='H'),
+         pdb_format_atom(an='X', ia=2, ir=self.num_pdb_res_output, xyz=x * (c+Vec(3,0,0)), elem='O'),
+         pdb_format_atom(an='Y', ia=3, ir=self.num_pdb_res_output, xyz=x * (c+Vec(0,3,0)), elem='S'),
+         pdb_format_atom(an='Z', ia=4, ir=self.num_pdb_res_output, xyz=x * (c+Vec(0,0,3)), elem='N'),
+      ]
+      # yapf: enable
+      print(x * Vec(0, 0, 0))
+      print(x * Vec(1, 1, 1))
+      self.pdbout.write(str.join('', pdblines))
+
+      self.num_pdb_res_output += 1
       # show symelems
       if self.showelems:
          for elem in node.generators:
@@ -1104,8 +1156,8 @@ class ComponentCenterVisitor(object):
                   CGO.extend(cgo_sphere(cn, r=2.5, col=self.colors[ipn]))
                   CGO.extend(cgo_sphere(cnx, r=1.7, col=self.colors[ipn]))
                   CGO.extend(cgo_sphere(cny, r=1.2, col=self.colors[ipn]))
-                  # if self.showlinks or True:
-                  # CGO.extend(cgo_cyl_arrow(n, cn, r=0.3, col=self.colors[ipn], arrowlen=2.0))
+                  if self.showlinks:
+                     CGO.extend(cgo_cyl_arrow(n, cn, r=0.3, col=self.colors[ipn], arrowlen=2.0))
       v = cmd.get_view()
       cmd.delete(self.label)
       cmd.load_cgo(CGO, self.label)

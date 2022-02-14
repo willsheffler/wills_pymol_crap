@@ -459,7 +459,7 @@ class ResBB(object):
          self.ss = n.ss
          return
       elif type(n) is type(""):
-         assert len(getres(n)) is 1
+         assert len(getres(n)) == 1
          m = cmd.get_model(n)
          self.n = xyz.Vec(m.atom[0].coord)
          self.ca = xyz.Vec(m.atom[1].coord)
@@ -1674,7 +1674,7 @@ def testhsphere(rratio=2.0):
    pnt = list()
    if not hasattr(rratio, "__iter__"):
       vmult = [(1.0 + (rratio - 1.0) * (1.0 - (float(l) - 1.0) / 6.0)) for l in range(8)]
-   elif len(rratio) is 7:
+   elif len(rratio) == 7:
       vmult = [0] + rratio
    with gzip.GzipFile("/Users/sheffler/Dropbox/project/sphere_hierarchy/hsphere.dat.gz") as f:
       for l, m, n in by3(f):
@@ -2270,7 +2270,11 @@ def get_first_last_resi(sele):
    end = model.atom[-1].resi
    return int(beg), int(end)
 
-def cube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.5, xform=xyz.Xform()):
+def showcen(rad=1, col=(1, 1, 1)):
+   showsphere(xyz.Vec(0, 0, 0), rad, col=col)
+
+def showcube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.1, xform=xyz.Xform()):
+   cmd.delete('CUBE')
    v = cmd.get_view()
    a = [
       xform * xyz.Vec(ub.x, ub.y, ub.z),
@@ -2300,24 +2304,51 @@ def cube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.5, xform=xyz.Xfo
       xform * xyz.Vec(ub.x, lb.y, ub.z),
       xform * xyz.Vec(ub.x, lb.y, lb.z),
    ]
-   cmd.load_cgo(
-      [
-         cgo.CYLINDER, a[0].x, a[0].y, a[0].z, b[0].x, b[0].y, b[0].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[1].x, a[1].y, a[1].z, b[1].x, b[1].y, b[1].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[2].x, a[2].y, a[2].z, b[2].x, b[2].y, b[2].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[3].x, a[3].y, a[3].z, b[3].x, b[3].y, b[3].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[4].x, a[4].y, a[4].z, b[4].x, b[4].y, b[4].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[5].x, a[5].y, a[5].z, b[5].x, b[5].y, b[5].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[6].x, a[6].y, a[6].z, b[6].x, b[6].y, b[6].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[7].x, a[7].y, a[7].z, b[7].x, b[7].y, b[7].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[8].x, a[8].y, a[8].z, b[8].x, b[8].y, b[8].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[9].x, a[9].y, a[9].z, b[9].x, b[9].y, b[9].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[10].x, a[10].y, a[10].z, b[10].x, b[10].y, b[10].z, r, 1, 1, 1, 1, 1, 1,
-         cgo.CYLINDER, a[11].x, a[11].y, a[11].z, b[11].x, b[11].y, b[11].z, r, 1, 1, 1, 1, 1, 1
-      ],
-      "UNIT_CELL",
-   )
+   mycgo = [
+      cgo.CYLINDER, a[0].x, a[0].y, a[0].z, b[0].x, b[0].y, b[0].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[1].x, a[1].y, a[1].z, b[1].x, b[1].y, b[1].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[2].x, a[2].y, a[2].z, b[2].x, b[2].y, b[2].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[3].x, a[3].y, a[3].z, b[3].x, b[3].y, b[3].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[4].x, a[4].y, a[4].z, b[4].x, b[4].y, b[4].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[5].x, a[5].y, a[5].z, b[5].x, b[5].y, b[5].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[6].x, a[6].y, a[6].z, b[6].x, b[6].y, b[6].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[7].x, a[7].y, a[7].z, b[7].x, b[7].y, b[7].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[8].x, a[8].y, a[8].z, b[8].x, b[8].y, b[8].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[9].x, a[9].y, a[9].z, b[9].x, b[9].y, b[9].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[10].x, a[10].y, a[10].z, b[10].x, b[10].y, b[10].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[11].x, a[11].y, a[11].z, b[11].x, b[11].y, b[11].z, r, 1, 1, 1, 1, 1, 1
+   ]
+   # yapf: disable
+   #   l=10#*sqrt(3)
+   #   m=-l
+   #   mycgo += [
+   #      cgo.CYLINDER, 0,0,0, l, 0, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, l, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, 0, l, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, m, 0, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, m, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, 0, m, r, 1, 1, 1, 1, 1, 1,
+   #
+   #      cgo.CYLINDER, 0,0,0, l, l, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, l, l, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, l, 0, l, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, m, l, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, m, l, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, m, 0, l, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, m, m, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, m, m, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, m, 0, m, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, l, m, 0, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, 0, l, m, r, 1, 1, 1, 1, 1, 1,
+   #      cgo.CYLINDER, 0,0,0, l, 0, m, r, 1, 1, 1, 1, 1, 1,
+   #
+   #   ]
+   # yapf: enable
+   cmd.load_cgo(mycgo, "CUBE")
    cmd.set_view(v)
+
+cmd.extend('showcube', showcube)
+cmd.extend('showcen', showcen)
 
 def getframe(obj):
    m = cmd.get_model(obj)
@@ -2420,6 +2451,48 @@ def rms_raw(sel1, sel2):
    cmd.align(sel1, sel2, cycles=0, transform=0, object='TMP_ALN')
    foo = cmd.rms_cur(sel1 + '&TMP_ALN', sel2 + '&TMP_ALN', matchmaker=-1)
    print(foo)
+
+all_pymol_chains = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz")
+
+def pdb_format_atom(
+    ia=0,
+    an="ATOM",
+    idx=" ",
+    rn="RES",
+    c="A",
+    ir=0,
+    insert=" ",
+    x=0,
+    y=0,
+    z=0,
+    occ=1,
+    b=1,
+    elem=" ",
+    xyz=None,
+):
+   if xyz is not None:
+      x, y, z = xyz[0], xyz[1], xyz[2]
+   # if rn in aa1:
+   # rn = aa123[rn]
+   if not isinstance(c, str):
+      c = all_pymol_chains[c]
+
+   print('pdb_format_atom', xyz)
+   print('   ',x)
+   print('   ',y)
+   print('   ',z)
+
+   format_str = _pdb_atom_record_format
+   if ia >= 100000:
+      format_str = format_str.replace("ATOM  {ia:5d}", "ATOM {ia:6d}")
+   if ir >= 10000:
+      format_str = format_str.replace("{ir:4d}{insert:1s}", "{ir:5d}")
+
+   return format_str.format(**locals())
+
+_pdb_atom_record_format = ("ATOM  {ia:5d} {an:^4}{idx:^1}{rn:3s} {c:1}{ir:4d}{insert:1s}   "
+                           "{x:8.3f}{y:8.3f}{z:8.3f}{occ:6.2f}{b:6.2f}           {elem:1s}\n")
+
 
 if __name__ == "__main__":
    import doctest

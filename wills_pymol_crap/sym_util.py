@@ -51,7 +51,6 @@ def get_xforms_by_chain(sele="all", verbose=False, userms=False):
 
 def cmp_to_key(mycmp):
    "Convert a cmp= function into a key= function"
-
    class K:
       def __init__(self, obj, *args):
          self.obj = obj
@@ -168,7 +167,7 @@ def find_symelems(sele_or_xforms="all", verbose=False):
 
 def guessdxaxes(sele="all", verbose=False):
    nfold = len(cmd.get_chains(sele))
-   assert nfold % 2 is 0
+   assert nfold % 2 == 0
    nfold /= 2
    symelems, maxrms, angerr, axiserr = find_symelems(sele, verbose=verbose)
    assert len(symelems) > 1
@@ -664,7 +663,7 @@ def xtal_frames(tgt=None, skip=tuple(), r=100):
       end = ray_sphere_intersection(-axis, ctot, c, r)
       if not beg or not end:
          continue
-      if nf is not 2:
+      if nf != 2:
          showcyl(beg, end, 0.3, col=(1.0, 1.0, 1.0))
       else:
          showcyl(beg, end, 0.2, col=(1.0, 0.5, 0.2))
