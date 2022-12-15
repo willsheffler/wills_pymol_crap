@@ -58,6 +58,15 @@ rpxdock_chains = r"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxy
 # DAL DAR DSG DAS DCY DGN DGL DHI DIL DLE DLY MED DPN DPR DSN DTH DTR DTY DVA
 #                 DCS??
 
+
+def keep():
+   obj = cmd.get_object_list('visible')
+   assert len(obj) == 1
+   os.makedirs('pymol_saves',exist_ok=True)
+   fname = f'pymol_saves/{obj[0]}_pmsave.pdb'
+   cmd.save(fname, obj[0])
+cmd.extend('keep',keep)
+
 def cyan():
    cmd.color('cyan', 'sele and (name N or elem C)')
    cmd.center('sele')
@@ -1934,6 +1943,7 @@ MOVE_UP_DOWN_SPECIAL_OBJS = [
    "line9",
    "test_hole",
    "context_structure",
+   "CUBE",
 ]
 
 def move_up_down_add_to_ignore_list(sel):
@@ -1964,6 +1974,8 @@ def move_down():
                cmd.enable(all_objs[0])
             else:
                cmd.enable(all_objs[i + 1])
+   if len(cmd.get_object_list('vis')) == 1:
+       cmd.dss('vis')
    # cmd.zoom( " or ".join(my_get_obj(enabled_only=True)), complete=True, buffer=3.0 )
    # cmd.orient
 
@@ -1979,6 +1991,8 @@ def move_up():
                cmd.enable(all_objs[-1])
             else:
                cmd.enable(all_objs[i - 1])
+   if len(cmd.get_object_list('vis')) == 1:
+       cmd.dss('vis')
    # cmd.zoom( " or ".join(my_get_obj(enabled_only=True)), complete=True, buffer=3.0 )
    # cmd.orient
 
@@ -2275,6 +2289,10 @@ def showcen(rad=1, col=(1, 1, 1)):
 
 def showcube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.1, xform=xyz.Xform()):
    cmd.delete('CUBE')
+   if isinstance(lb, int):
+      ub = xyz.Vec(lb, lb, lb)
+      lb = xyz.Vec(0,0,0)
+      # lb = xyz.Vec(-lb, -lb, -lb)      
    v = cmd.get_view()
    a = [
       xform * xyz.Vec(ub.x, ub.y, ub.z),
@@ -2489,6 +2507,13 @@ def pdb_format_atom(
       format_str = format_str.replace("{ir:4d}{insert:1s}", "{ir:5d}")
 
    return format_str.format(**locals())
+
+
+def obj_list_rms():
+   objs = cmd.get_object_list()
+   for i,o1 in enumerate(objs[:-1]):
+      o2 = objs[i+1]
+      print(cmd.rms(o1,o2))
 
 _pdb_atom_record_format = ("ATOM  {ia:5d} {an:^4}{idx:^1}{rn:3s} {c:1}{ir:4d}{insert:1s}   "
                            "{x:8.3f}{y:8.3f}{z:8.3f}{occ:6.2f}{b:6.2f}           {elem:1s}\n")

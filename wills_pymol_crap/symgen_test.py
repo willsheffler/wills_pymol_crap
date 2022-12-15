@@ -1,4 +1,6 @@
-from symgen import (
+import random
+
+from symgen_classes import (
    SymElem,
    generate_sym_trie,
    BuildCGO,
@@ -9,6 +11,7 @@ from pymol import cmd
 
 def test_xtal(
    G,
+   *,
    cell,
    depth=4,
    mindepth=0,
@@ -40,8 +43,7 @@ def test_xtal(
          if symdef:
             sdef_string = FN[-1].make_symdef(**kw)
             if verbose:
-               print("==================== SYMDEF (dump to " + tag + "_" + str(d) +
-                     ".sym) ====================")
+               print("==================== SYMDEF (dump to " + tag + "_" + str(d) + ".sym) ====================")
                print(sdef_string)
                print("=====================================================================")
             with open(tag + "_" + str(d) + ".sym", "w") as out:
@@ -68,13 +70,41 @@ def test_xtal(
 #    AXS = [Vec(1, 1, 1), Vec(1, 0, 0)]
 #    CEN = [cell * Vec(0, 0, 0), cell * Vec(0, 0, 0.25)]
 
+def test_I4132(cell=100, tag='I4132', **kw):
+   """
+delete all; run /home/sheffler/pymol3/symgen_classes.py; run /home/sheffler/pymol3/symgen.py; run /home/sheffler/pymol3/symgen_test.py; test_I4132(depth=7,shownodes=0,cell=200,maxrad=180); run /home/sheffler/pymol3/misc/G222.py; gyroid(200,r=180)
+   """
+   # delete all; run /Users/sheffler/pymol/symgen.py; test_I4132( cell=150,
+   # depth=7, shownodes=0, maxrad=150 );  gyroid(150,r=150,c=Vec(75,75,75))
+   G = [
+      # SymElem("C3", cen=cell * Vec(0.5, 0.5, 0.5), axis=Vec(1, 1, 1), col=(1, 0.5, 0.5)),
+      # SymElem("C2", cen=cell * Vec(1.125 / 2, 0.500, 0.625), axis=Vec(1, 0, 0), col=(0.5, 1, 0.5)),
+      # SymElem("C2", cen=cell * Vec(0.875 / 2, 0.500, 0.375), axis=Vec(1, 0, 0), col=(0.5, 0.5, 1)),
+      # SymElem("C3", axis=Vec(1, 1, 1)),
+      # SymElem("C2", axis=Vec(1, 1, 0), cen=cell * Vec(-1, 1, 1) / 8.0),
+      # SymElem("C2", axis=Vec(1, 1, 0), cen=cell * Vec(1, -1, -1) / 8.0),
+      # SymElem( "C2", axis=Vec(1,1,0), cen=cell*Vec( 1,-1,-1)/8.0, col=(1,1,0) ),
+      SymElem("D3", cen=cell * Vec(0.125, 0.125, 0.125), axis=Vec(1, 1, 1), axis2=Vec(1, -1, 0), col=(0, 1, 0)),
+      # SymElem("D2", cen=cell * Vec(0.125, 0.000, 0.250), axis=Vec(1, 0, 0), axis2=Vec(0, -1, 1), col=(0, 1, 1)),
+      # SymElem("D3", cen=cell * Vec(-0.125, -0.125, -0.125), axis=Vec(1, 1, 1), axis2=Vec(1, -1, 0), col=(1, 0, 0)),
+      SymElem("D2", cen=cell * Vec(-0.125, 0.000, -0.250), axis=Vec(1, 0, 0), axis2=Vec(0, -1, 1), col=(1, 1, 0)),
+   ]
+   test_xtal(G, cell=cell, tag=tag, origin=cell * Vec(0.5, 0.5, 0.5), showshape=0, **kw)
+   # cube( cell*Vec(-0.5,-0.5,-0.5), cell*Vec(0.5,0.5,0.5) )
+   # cube(cell * Vec(-0, -0, -0), cell * Vec(1, 1, 1))
+
 def test_I213(cell=70, **kw):
-   'delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_I213(depth=5,mindepth=5,cell=10)'
+   """
+delete all; run ~/pymol3/symgen.py; run ~/pymol3/symgen_test.py; test_I213(depth=6,mindepth=6,cell=100)
+   """
    # AXS = [Vec(1, 1, 1), Vec(1, 1, -1)]
    # CEN = [cell * Vec(0, 0, 0), cell * Vec(0.5, 0, 0.0)]
    G = [
       SymElem("C2", axis=Vec(1, 0, 0), cen=Vec(0, 0, 0.25) * cell, col=[1, 0.7, 0.0]),
       SymElem("C3", axis=Vec(1, 1, 1) * 0.57735, cen=Vec(0, 0, 0) * cell, col=[0.1, 0.5, 1]),
+
+      # SymElem("C2", axis=Vec(0, 1, 0), cen=Vec(-1, 0, -2)/4 * cell, col=[1, 0, 0]),
+      # SymElem("C3", axis=Vec(1, -1, 1), cen=Vec(2,1,-1)/6 * cell, col=[0, 1, 0]),
    ]
 
    test_xtal(
@@ -85,11 +115,10 @@ def test_I213(cell=70, **kw):
       showshape=0,
       symdef=0,
       make_symdef=0,
-      showlinks=1,
-      shownodes=1,
+      showlinks=False,
+      shownodes=False,
       radius=0.5,
-      bbox=[Vec(-1, -1, -1) * -999,
-            Vec(cell + 1, cell + 1, cell + 1) * 100],
+      bbox=[Vec(cell, cell, cell) * -0.1, Vec(cell, cell, cell) * 1.1],
       # length=40,
       **kw,
    )
@@ -112,7 +141,7 @@ def test_P213(cell=70, **kw):
    ]
    test_xtal(
       G,
-      cell,
+      cell=cell,
       tag="P213",
       origin=cell * Vec(0.0, 0.0, 0.0),
       showshape=0,
@@ -410,37 +439,6 @@ def test_octa(cell=100, **kw):
 #       SymElem("D4", cen=cell * Vec(0.5, 0.0, 0.0)),
 #    ]
 #    test_xtal(G, cell, tag="test_P4_44", **kw)
-
-# def test_I4132(cell=100, **kw):
-#    # delete all; test_I4132(depth=7,shownodes=0,cell=200,maxrad=180); run /Users/sheffler/pymol3/misc/G222.py; gyroid(200,r=180)
-#    # delete all; run /Users/sheffler/pymol/symgen.py; test_I4132( cell=150,
-#    # depth=7, shownodes=0, maxrad=150 );  gyroid(150,r=150,c=Vec(75,75,75))
-#    G = [
-#       SymElem("C3", cen=cell * Vec(0.5, 0.5, 0.5), axis=Vec(1, 1, 1), col=(1, 0, 0)),
-#       SymElem(
-#          "C2",
-#          cen=cell * Vec(1.125 / 2, 0.500, 0.625),
-#          axis=Vec(1, 0, 0),
-#          col=(0, 1, 0),
-#       ),
-#       SymElem(
-#          "C2",
-#          cen=cell * Vec(0.875 / 2, 0.500, 0.375),
-#          axis=Vec(1, 0, 0),
-#          col=(0, 0, 1),
-#       ),
-#       # SymElem("C3", axis=Vec(1, 1, 1)),
-#       # SymElem("C2", axis=Vec(1, 1, 0), cen=cell * Vec(-1, 1, 1) / 8.0),
-#       # SymElem("C2", axis=Vec(1, 1, 0), cen=cell * Vec(1, -1, -1) / 8.0),
-#       # SymElem( "C2", axis=Vec(1,1,0), cen=cell*Vec( 1,-1,-1)/8.0, col=(1,1,0) ),
-#       # SymElem( "D3", cen=cell*Vec(0.125,0.125,0.125), axis=Vec(1,1,1), axis2=Vec(1,-1,0), col=(0,1,0) ),
-#       # SymElem( "D2", cen=cell*Vec(0.125,0.000,0.250), axis=Vec(1,0,0), axis2=Vec(0,-1,1), col=(0,1,1) ),
-#       # SymElem( "D3", cen=cell*Vec(-0.125,-0.125,-0.125), axis=Vec(1,1,1), axis2=Vec(1,-1,0), col=(1,0,0) ),
-#       # SymElem( "D2", cen=cell*Vec(-0.125,0.000,-0.250), axis=Vec(1,0,0), axis2=Vec(0,-1,1), col=(1,1,0) ),
-#    ]
-#    test_xtal(G, cell, tag="I4132", origin=cell * Vec(0.5, 0.5, 0.5), showshape=0, **kw)
-#    # cube( cell*Vec(-0.5,-0.5,-0.5), cell*Vec(0.5,0.5,0.5) )
-#    cube(cell * Vec(-0, -0, -0), cell * Vec(1, 1, 1))
 
 # def test_I4132_D(cell=100, **kw):
 #    # delete all; test_I4132(depth=7,shownodes=0,cell=200,maxrad=180); run /Users/sheffler/pymol3/misc/G222.py; gyroid(200,r=180)
