@@ -6,6 +6,10 @@ import inspect
 import itertools
 import numpy as np
 
+import icecream
+
+icecream.install()
+
 newpath = os.path.dirname(inspect.getfile(inspect.currentframe()))  # script directory
 if not newpath in sys.path:
    sys.path.append(newpath)
@@ -21,7 +25,7 @@ import glob
 from random import randrange
 from math import sqrt
 import xyzMath as xyz
-from xyzMath import Ux, Uy, Uz, Imat
+from xyzMath import Ux, Uy, Uz, Imat, Vec, Mat, Xform
 from functools import partial
 import cProfile
 from pymol.cgo import BEGIN, LINES, COLOR, VERTEX, END
@@ -49,8 +53,7 @@ except ImportError as e:
       return False
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 100
-ROSETTA_CHAINS = (
-   r"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$&.<>?]{}|-_~=%zyxwvutsrqponmlkjihgfedcba" * 100)
+ROSETTA_CHAINS = (r"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$&.<>?]{}|-_~=%zyxwvutsrqponmlkjihgfedcba" * 100)
 
 rpxdock_chains = r"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 
@@ -58,14 +61,14 @@ rpxdock_chains = r"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxy
 # DAL DAR DSG DAS DCY DGN DGL DHI DIL DLE DLY MED DPN DPR DSN DTH DTR DTY DVA
 #                 DCS??
 
-
 def keep():
    obj = cmd.get_object_list('visible')
    assert len(obj) == 1
-   os.makedirs('pymol_saves',exist_ok=True)
+   os.makedirs('pymol_saves', exist_ok=True)
    fname = f'pymol_saves/{obj[0]}_pmsave.pdb'
    cmd.save(fname, obj[0])
-cmd.extend('keep',keep)
+
+cmd.extend('keep', keep)
 
 def cyan():
    cmd.color('cyan', 'sele and (name N or elem C)')
@@ -124,12 +127,11 @@ def bb_to_rib():
 
 cmd.extend("bb_to_rib", bb_to_rib)
 
-COLORS = ("cyan", "lightmagenta", "yellow", "salmon", "hydrogen", "slate", "orange", "lime",
-          "deepteal", "hotpink", "yelloworange", "violetpurple", "grey70", "marine", "olive",
-          "smudge", "teal", "dirtyviolet", "wheat", "deepsalmon", "lightpink", "aquamarine",
-          "paleyellow", "limegreen", "skyblue", "warmpink", "limon", "violet", "bluewhite",
-          "greencyan", "sand", "forest", "lightteal", "darksalmon", "splitpea", "raspberry",
-          "grey50", "deepblue", "brown")
+COLORS = ("cyan", "lightmagenta", "yellow", "salmon", "hydrogen", "slate", "orange", "lime", "deepteal", "hotpink",
+          "yelloworange", "violetpurple", "grey70", "marine", "olive", "smudge", "teal", "dirtyviolet", "wheat",
+          "deepsalmon", "lightpink", "aquamarine", "paleyellow", "limegreen", "skyblue", "warmpink", "limon", "violet",
+          "bluewhite", "greencyan", "sand", "forest", "lightteal", "darksalmon", "splitpea", "raspberry", "grey50",
+          "deepblue", "brown")
 COLORS += COLORS + COLORS + COLORS
 
 aa_1_3 = {
@@ -224,10 +226,9 @@ aa_types = {
 def showaxes():
    v = cmd.get_view()
    obj = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX,
-      100.0, 0.0, 0.0, cgo.COLOR, 0.0, 1.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 0.0,
-      100.0, 0.0, cgo.COLOR, 0.0, 0.0, 1.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 00, 0.0, 100.0,
-      cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 100.0, 0.0, 0.0, cgo.COLOR,
+      0.0, 1.0, 0.0, cgo.VERTEX, 0.0, 0.0, 0.0, cgo.VERTEX, 0.0, 100.0, 0.0, cgo.COLOR, 0.0, 0.0, 1.0, cgo.VERTEX, 0.0,
+      0.0, 0.0, cgo.VERTEX, 00, 0.0, 100.0, cgo.END
    ]
    cmd.load_cgo(obj, "axes")
    cmd.set_view(v)
@@ -286,12 +287,11 @@ DESCRIPTION
    d = w * 1.618  # cone base diameter
 
    obj = [
-      cgo.CYLINDER, 0.0, 0.0, 0.0, l, 0.0, 0.0, w, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, cgo.CYLINDER,
-      0.0, 0.0, 0.0, 0.0, l, 0.0, w, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, cgo.CYLINDER, 0.0, 0.0, 0.0,
-      0.0, 0.0, l, w, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, cgo.CONE, l, 0.0, 0.0, h + l, 0.0, 0.0, d,
-      0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, cgo.CONE, 0.0, l, 0.0, 0.0, h + l, 0.0, d, 0.0,
-      0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, cgo.CONE, 0.0, 0.0, l, 0.0, 0.0, h + l, d, 0.0, 0.0,
-      0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0
+      cgo.CYLINDER, 0.0, 0.0, 0.0, l, 0.0, 0.0, w, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, cgo.CYLINDER, 0.0, 0.0, 0.0, 0.0, l,
+      0.0, w, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, cgo.CYLINDER, 0.0, 0.0, 0.0, 0.0, 0.0, l, w, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+      cgo.CONE, l, 0.0, 0.0, h + l, 0.0, 0.0, d, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, cgo.CONE, 0.0, l, 0.0,
+      0.0, h + l, 0.0, d, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, cgo.CONE, 0.0, 0.0, l, 0.0, 0.0, h + l, d, 0.0,
+      0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0
    ]
 
    PutCenterCallback(name, 1).load()
@@ -302,10 +302,9 @@ cmd.extend("corneraxes", corneraxes)
 def showaxes2():
    v = cmd.get_view()
    obj = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, -90.0, 0.0, 0.0, cgo.VERTEX,
-      90.0, 0.0, 0.0, cgo.COLOR, 0.0, 1.0, 0.0, cgo.VERTEX, 0.0, -90.0, 0.0, cgo.VERTEX, 0.0,
-      90.0, 0.0, cgo.COLOR, 0.0, 0.0, 1.0, cgo.VERTEX, 0.0, 0.0, -90.0, cgo.VERTEX, 00, 0.0, 90.0,
-      cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, 1.0, 0.0, 0.0, cgo.VERTEX, -90.0, 0.0, 0.0, cgo.VERTEX, 90.0, 0.0, 0.0,
+      cgo.COLOR, 0.0, 1.0, 0.0, cgo.VERTEX, 0.0, -90.0, 0.0, cgo.VERTEX, 0.0, 90.0, 0.0, cgo.COLOR, 0.0, 0.0, 1.0,
+      cgo.VERTEX, 0.0, 0.0, -90.0, cgo.VERTEX, 00, 0.0, 90.0, cgo.END
    ]
    cmd.load_cgo(obj, "axes")
    cmd.set_view(v)
@@ -335,8 +334,7 @@ def showcom(sel="all"):
    global numcom
    c = com(sel)
    print("Center of mass: ", c)
-   cgo = [pymol.cgo.COLOR, 1.0, 1.0, 1.0, cgo.SPHERE, c.x, c.y, c.z,
-          1.0]  # white sphere with 3A radius
+   cgo = [pymol.cgo.COLOR, 1.0, 1.0, 1.0, cgo.SPHERE, c.x, c.y, c.z, 1.0]  # white sphere with 3A radius
    cmd.load_cgo(cgo, "com%i" % numcom)
    numcom += 1
 
@@ -362,8 +360,8 @@ def showvecfrompoint(a, c, col=(1, 1, 1), lbl=""):
    cmd.delete(lbl)
    v = cmd.get_view()
    OBJ = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x, c.y, c.z,
-      cgo.VERTEX, c.x + a.x, c.y + a.y, c.z + a.z, cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x, c.y, c.z, cgo.VERTEX, c.x + a.x,
+      c.y + a.y, c.z + a.z, cgo.END
    ]
    cmd.load_cgo(OBJ, lbl)
    # cmd.load_cgo([cgo.COLOR, col[0],col[1],col[2],
@@ -375,8 +373,8 @@ def showvecfrompoint(a, c, col=(1, 1, 1), lbl=""):
 
 def cgo_segment(c1, c2, col=(1, 1, 1)):
    OBJ = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c1.x, c1.y, c1.z,
-      cgo.VERTEX, c2.x, c2.y, c2.z, cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c1.x, c1.y, c1.z, cgo.VERTEX, c2.x, c2.y,
+      c2.z, cgo.END
    ]
    # cmd.load_cgo([cgo.COLOR, col[0],col[1],col[2],
    #         cgo.CYLINDER, c1.x,     c1.y,     c1.z,
@@ -412,8 +410,7 @@ def cgo_cyl(c1, c2, r, col=(1, 1, 1), col2=None):
    if not col2:
       col2 = col
    return [  # cgo.COLOR, col[0],col[1],col[2],
-      cgo.CYLINDER, c1.x, c1.y, c1.z, c2.x, c2.y, c2.z, r, col[0], col[1], col[2], col2[0],
-      col2[1], col2[2]
+      cgo.CYLINDER, c1.x, c1.y, c1.z, c2.x, c2.y, c2.z, r, col[0], col[1], col[2], col2[0], col2[1], col2[2]
    ]
 
 def showcyl(c1, c2, r, col=(1, 1, 1), col2=None, lbl=""):
@@ -434,16 +431,16 @@ def showline(a, c, col=(1, 1, 1), lbl=""):
    cmd.delete(lbl)
    v = cmd.get_view()
    OBJ = [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x - a.x, c.y - a.y,
-      c.z - a.z, cgo.VERTEX, c.x + a.x, c.y + a.y, c.z + a.z, cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x - a.x, c.y - a.y, c.z - a.z, cgo.VERTEX,
+      c.x + a.x, c.y + a.y, c.z + a.z, cgo.END
    ]
    cmd.load_cgo(OBJ, lbl)
    cmd.set_view(v)
 
 def cgo_lineabs(a, c, col=(1, 1, 1)):
    return [
-      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x, c.y, c.z,
-      cgo.VERTEX, a.x, a.y, a.z, cgo.END
+      cgo.BEGIN, cgo.LINES, cgo.COLOR, col[0], col[1], col[2], cgo.VERTEX, c.x, c.y, c.z, cgo.VERTEX, a.x, a.y, a.z,
+      cgo.END
    ]
 
 def showlineabs(a, c, col=(1, 1, 1), lbl=""):
@@ -485,8 +482,7 @@ class ResBB(object):
 
    def rms(s, o):
       assert type(o) is ResBB
-      return math.sqrt((s.n - o.n) * (s.n - o.n) + (s.ca - o.ca) * (s.ca - o.ca) + (s.c - o.c) *
-                       (s.c - o.c))
+      return math.sqrt((s.n - o.n) * (s.n - o.n) + (s.ca - o.ca) * (s.ca - o.ca) + (s.c - o.c) * (s.c - o.c))
 
    def __rmul__(r, m):
       return ResBB(m * r.n, m * r.ca, m * r.c, r.ss)
@@ -521,8 +517,7 @@ class DisulfLib(object):
       }
       for l in open(fn).readlines():
          ss1, ss2, sep, rt, xx, xy, xz, yx, yy, yz, zx, zy, zz, x, y, z = l.split()
-         self.lib[ss1 + ss2].append(
-            Jump(xyz.Mat(xx, xy, xz, yx, yy, yz, zx, zy, zz), xyz.Vec(x, y, z)))
+         self.lib[ss1 + ss2].append(Jump(xyz.Mat(xx, xy, xz, yx, yy, yz, zx, zy, zz), xyz.Vec(x, y, z)))
 
    def disulf_rms(self, r1, r2):
       assert type(r1) is ResBB
@@ -977,8 +972,7 @@ def alignbb(sel="all", obj=None):
    for o in l:
       if o == obj:
          continue
-      cmd.do("pair_fit " + o + " and name n+ca+c and (" + sel + "), " + obj +
-             " and name n+ca+c and (" + sel + ")")
+      cmd.do("pair_fit " + o + " and name n+ca+c and (" + sel + "), " + obj + " and name n+ca+c and (" + sel + ")")
    return
 
 def alignall(sel="all", obj=None):
@@ -993,7 +987,7 @@ def alignall(sel="all", obj=None):
    for o in l:
       if o == obj:
          continue
-      cmd.do("super " + o + " and (" + sel + "), " + obj + " and (" + sel + ")")
+      cmd.do("align " + o + " and (" + sel + "), " + obj + " and (" + sel + ")")
    return
 
 def fitall(sel="all", obj=None):
@@ -1031,8 +1025,7 @@ def bondzn():
       for r, c in getres(o + " and elem ZN"):
          cmd.bond(
             "(%s and resi %s and chain %s)" % (o, r, c),
-            "(%s and resn HIS and elem N) within 2.5 of (%s and resi %s and chain %s)" %
-            (o, o, r, c),
+            "(%s and resn HIS and elem N) within 2.5 of (%s and resi %s and chain %s)" % (o, o, r, c),
          )
       break
 
@@ -1325,16 +1318,14 @@ def procD5dat(lfile=None, biod="/data/biounit", outd=None):
    Nnsym = 0
    Nnomxatm = 0
    Nhomogen = 0
-   files = (open(lfile).readlines() if lfile else list(
-      map(os.path.basename, glob.glob(biod + "/*"))))
+   files = (open(lfile).readlines() if lfile else list(map(os.path.basename, glob.glob(biod + "/*"))))
    for fn in files:
       fn = fn.strip()
       pdb = os.path.basename(fn)[:4].lower()
       bnum = int(fn[-1:])
       print(fn, pdb, bnum)
-      if os.path.exists(outd + "/" + pdb + "_" + str(bnum) +
-                        "_sub1.pdb") or os.path.exists(outd + "/" + pdb + "_" + str(bnum) +
-                                                       "_sub1.pdb.gz"):
+      if os.path.exists(outd + "/" + pdb + "_" + str(bnum) + "_sub1.pdb") or os.path.exists(outd + "/" + pdb + "_" +
+                                                                                            str(bnum) + "_sub1.pdb.gz"):
          Nok += 1
          continue
       fname = biod + "/" + fn
@@ -1729,8 +1720,7 @@ def testsphere():
    # 752, 762, 792, 812, 842, 912, 932, 972, )):
    for n in (32, 122, 482, 1922, 7682, 30722):
       # for n in (32, 92, 272, 812, 2432):#, 482, 1922, 7682, 30722):
-      f = gzip.GzipFile(
-         "/Users/sheffler/Dropbox/project/sphere_hierarchy/att/sphere_%i.dat.gz" % n)
+      f = gzip.GzipFile("/Users/sheffler/Dropbox/project/sphere_hierarchy/att/sphere_%i.dat.gz" % n)
       s = list(floats2vecs(float(x) for x in f))
       f.close()
       obj = [cgo.BEGIN, cgo.POINTS, cgo.COLOR, 1.0, 1.0, 1.0]
@@ -1822,10 +1812,8 @@ def stubalign(s="all", s1="pk1", s2="pk2", s3="pk3"):
 def tmpdoit():
    axs = {
       "TET": (xyz.Vec(0, 0, 1) + xyz.Vec(0.942809043336065, 0, -0.333333328372267)).normalized(),
-      "OCT": (xyz.Vec(0, 0, 1) +
-              xyz.Vec(0.666666666666667, 0.666666666666667, 0.333333333333333)).normalized(),
-      "ICS": (xyz.Vec(0, 0, 1) +
-              xyz.Vec(-0.333333320519719, 0.57735021589134, 0.745356039515023)).normalized(),
+      "OCT": (xyz.Vec(0, 0, 1) + xyz.Vec(0.666666666666667, 0.666666666666667, 0.333333333333333)).normalized(),
+      "ICS": (xyz.Vec(0, 0, 1) + xyz.Vec(-0.333333320519719, 0.57735021589134, 0.745356039515023)).normalized(),
    }
    for fn in glob.glob("/Users/sheffler/project/111108_BPY_TOI/picksdone/*.pse"):
       print(fn)
@@ -1930,6 +1918,7 @@ MOVE_UP_DOWN_SPECIAL_OBJS = [
    "axes",
    'tgt',
    "ref",
+   "ref_0",
    "UNIT_CELL",
    "line0",
    "line1",
@@ -1958,8 +1947,9 @@ def my_get_obj(enabled_only=0):
    global MOVE_UP_DOWN_SPECIAL_OBJS
    objs = cmd.get_names("objects", enabled_only)
    for special in MOVE_UP_DOWN_SPECIAL_OBJS:
-      if special in objs:
-         objs.remove(special)
+      for obj in objs.copy():
+         if obj.startswith(special):
+            objs.remove(obj)
    return objs
 
 def move_down():
@@ -1975,7 +1965,7 @@ def move_down():
             else:
                cmd.enable(all_objs[i + 1])
    if len(cmd.get_object_list('vis')) == 1:
-       cmd.dss('vis')
+      cmd.dss('vis')
    # cmd.zoom( " or ".join(my_get_obj(enabled_only=True)), complete=True, buffer=3.0 )
    # cmd.orient
 
@@ -1992,7 +1982,7 @@ def move_up():
             else:
                cmd.enable(all_objs[i - 1])
    if len(cmd.get_object_list('vis')) == 1:
-       cmd.dss('vis')
+      cmd.dss('vis')
    # cmd.zoom( " or ".join(my_get_obj(enabled_only=True)), complete=True, buffer=3.0 )
    # cmd.orient
 
@@ -2217,8 +2207,7 @@ def hsv_to_rgb(hsv):
 # Add color_obj to the PyMOL command list
 cmd.extend("color_obj", color_obj)
 
-def make_zdock_set(d="/work/sheffler/Dropbox/project/zdock/pdb_lib",
-                   tgt="/work/sheffler/data/zdock_AB"):
+def make_zdock_set(d="/work/sheffler/Dropbox/project/zdock/pdb_lib", tgt="/work/sheffler/data/zdock_AB"):
    for p in os.listdir(d):
       fn0 = "%(d)s/%(p)s/%(p)s.pdb" % vars()
       fn1 = "%(d)s/%(p)s/%(p)s_1.pdb" % vars()
@@ -2287,12 +2276,77 @@ def get_first_last_resi(sele):
 def showcen(rad=1, col=(1, 1, 1)):
    showsphere(xyz.Vec(0, 0, 0), rad, col=col)
 
+def showp213axes(state=1):
+   v = cmd.get_view()
+   cmd.delete('p213axes')
+   cen1 = com('chain A+B+C and vis', state=state)
+   cen2 = com('chain A+D+E and vis', state=state)
+   mycgo = list()
+   mycgo += cgo_cyl(cen1 - 20 * Vec(1, 1, 1), cen1 + 20 * Vec(1, 1, 1), r=1)
+   mycgo += cgo_sphere(cen1, r=6)
+   mycgo += cgo_cyl(cen2 - 20 * Vec(-1, -1, 1), cen2 + 20 * Vec(-1, -1, 1), r=1)
+   mycgo += cgo_sphere(cen2, r=6)
+   cmd.load_cgo(mycgo, 'p213axes')
+   cmd.set_view(v)
+
+def showcageaxes(state=1):
+   v = cmd.get_view()
+   cmd.delete('cageaxes')
+   cen1 = com('chain A+B+C and vis', state=state)
+   cen2 = com('chain A+D and vis', state=state)
+   mycgo = list()
+   mycgo += cgo_cyl(Vec(0, 0, 0), 1.3 * cen1, r=1)
+   mycgo += cgo_cyl(Vec(0, 0, 0), 1.3 * cen2, r=1)
+   cmd.load_cgo(mycgo, 'cageaxes')
+   cmd.set_view(v)
+
+def showl632axes(state=1):
+   v = cmd.get_view()
+   cmd.delete('l632axes')
+   cen1 = com('chain A+B+D and vis', state=state)
+   cen2 = com('chain C+D and vis', state=state)
+   cen3 = com('chain D+E+O+8+V+H', state=state)
+
+   # You clicked /MAKESYM//C/GLU`91/C
+   # You clicked /MAKESYM//N/LYS`29/C
+   # You clicked /MAKESYM//7/LEU`71/CA
+   # You clicked /MAKESYM//O/LEU`43/O
+   # You clicked /MAKESYM//E/ALA`44/N
+   # You clicked /MAKESYM//D/ALA`86/N
+   axlen = 30
+   mycgo = list()
+   mycgo += cgo_cyl(cen1 - axlen * Vec(0, 0, 1), cen1 + axlen * Vec(0, 0, 1), r=1)
+   mycgo += cgo_sphere(cen1, r=6)
+   mycgo += cgo_cyl(cen2 - axlen * Vec(0, 0, 1), cen2 + axlen * Vec(0, 0, 1), r=1)
+   mycgo += cgo_sphere(cen2, r=6)
+   mycgo += cgo_cyl(cen3 - axlen * Vec(0, 0, 1), cen3 + axlen * Vec(0, 0, 1), r=1)
+   mycgo += cgo_sphere(cen3, r=6)
+   cmd.load_cgo(mycgo, 'l632axes')
+   cmd.set_view(v)
+
+def showbbox(sele='visible', radius=1, pad=0, scale=1.0, state=1):
+   coords = cmd.get_coords(sele, state=state)
+
+   showcube(
+      lb=Vec(
+         np.min(coords[:, 0]) * scale - pad,
+         np.min(coords[:, 1]) * scale - pad,
+         np.min(coords[:, 2]) * scale - pad,
+      ),
+      ub=Vec(
+         np.max(coords[:, 0]) * scale + pad,
+         np.max(coords[:, 1]) * scale + pad,
+         np.max(coords[:, 2]) * scale + pad,
+      ),
+      r=radius,
+   )
+
 def showcube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.1, xform=xyz.Xform()):
    cmd.delete('CUBE')
-   if isinstance(lb, int):
-      ub = xyz.Vec(lb, lb, lb)
-      lb = xyz.Vec(0,0,0)
-      # lb = xyz.Vec(-lb, -lb, -lb)      
+   if isinstance(lb, (int, float)):
+      ub = xyz.Vec(ub, ub, ub)
+      # lb = xyz.Vec(0, 0, 0)
+      lb = xyz.Vec(lb, lb, lb)
    v = cmd.get_view()
    a = [
       xform * xyz.Vec(ub.x, ub.y, ub.z),
@@ -2323,18 +2377,16 @@ def showcube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.1, xform=xyz
       xform * xyz.Vec(ub.x, lb.y, lb.z),
    ]
    mycgo = [
-      cgo.CYLINDER, a[0].x, a[0].y, a[0].z, b[0].x, b[0].y, b[0].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[1].x, a[1].y, a[1].z, b[1].x, b[1].y, b[1].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[2].x, a[2].y, a[2].z, b[2].x, b[2].y, b[2].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[3].x, a[3].y, a[3].z, b[3].x, b[3].y, b[3].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[4].x, a[4].y, a[4].z, b[4].x, b[4].y, b[4].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[5].x, a[5].y, a[5].z, b[5].x, b[5].y, b[5].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[6].x, a[6].y, a[6].z, b[6].x, b[6].y, b[6].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[7].x, a[7].y, a[7].z, b[7].x, b[7].y, b[7].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[8].x, a[8].y, a[8].z, b[8].x, b[8].y, b[8].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[9].x, a[9].y, a[9].z, b[9].x, b[9].y, b[9].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[10].x, a[10].y, a[10].z, b[10].x, b[10].y, b[10].z, r, 1, 1, 1, 1, 1, 1,
-      cgo.CYLINDER, a[11].x, a[11].y, a[11].z, b[11].x, b[11].y, b[11].z, r, 1, 1, 1, 1, 1, 1
+      cgo.CYLINDER, a[0].x, a[0].y, a[0].z, b[0].x, b[0].y, b[0].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[1].x, a[1].y,
+      a[1].z, b[1].x, b[1].y, b[1].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[2].x, a[2].y, a[2].z, b[2].x, b[2].y, b[2].z,
+      r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[3].x, a[3].y, a[3].z, b[3].x, b[3].y, b[3].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[4].x, a[4].y, a[4].z, b[4].x, b[4].y, b[4].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[5].x, a[5].y,
+      a[5].z, b[5].x, b[5].y, b[5].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[6].x, a[6].y, a[6].z, b[6].x, b[6].y, b[6].z,
+      r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[7].x, a[7].y, a[7].z, b[7].x, b[7].y, b[7].z, r, 1, 1, 1, 1, 1, 1,
+      cgo.CYLINDER, a[8].x, a[8].y, a[8].z, b[8].x, b[8].y, b[8].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[9].x, a[9].y,
+      a[9].z, b[9].x, b[9].y, b[9].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[10].x, a[10].y, a[10].z, b[10].x, b[10].y,
+      b[10].z, r, 1, 1, 1, 1, 1, 1, cgo.CYLINDER, a[11].x, a[11].y, a[11].z, b[11].x, b[11].y, b[11].z, r, 1, 1, 1, 1,
+      1, 1
    ]
    # yapf: disable
    #   l=10#*sqrt(3)
@@ -2368,8 +2420,8 @@ def showcube(lb=xyz.Vec(-10, -10, -10), ub=xyz.Vec(10, 10, 10), r=0.1, xform=xyz
 cmd.extend('showcube', showcube)
 cmd.extend('showcen', showcen)
 
-def getframe(obj):
-   m = cmd.get_model(obj)
+def getframe(obj, state=1):
+   m = cmd.get_model(obj, state=state)
    x = xyz.Vec(m.atom[0].coord)
    y = xyz.Vec(m.atom[int(len(m.atom) / 2)].coord)
    z = xyz.Vec(m.atom[-1].coord)
@@ -2377,12 +2429,12 @@ def getframe(obj):
    # print "getframe:",frame
    return frame
 
-def getrelframe(newobj, refobj, Forigin=None):
+def getrelframe(newobj, refobj, Forigin=None, state=1):
    """get transform between two objects, assume the obj's are identical"""
    if Forigin is None:
       Forigin = xyz.Xform(xyz.Imat, xyz.Vec(0, 0, 0))
-   Fref = Forigin * getframe(refobj + " and name CA")
-   Fnew = Forigin * getframe(newobj + " and name CA")
+   Fref = Forigin * getframe(refobj + " and name CA", state=state)
+   Fnew = Forigin * getframe(newobj + " and name CA", state=state)
    Fdelta = Fnew * ~Fref
    return Fdelta
 

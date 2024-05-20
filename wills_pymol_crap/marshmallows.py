@@ -28,7 +28,9 @@ def marshmallows_one(sel, col, name, resl=1):
 def marshmallows(sel):
    cmd.delete("surf*")
    cmd.delete("map*")
-   COLs = ("green", "cyan", "magenta", "yellow", "pink")
+   COLs = ["green", "cyan", "magenta", "yellow", "pink", 'darksalmon','aquamarine',
+           'deeppurple','deepteal','forest','brown','olive','oxygen',
+      ]*50
    COLs = COLs + COLs + COLs
    cmd.do("remove hydro")
    cmd.do("bg_color white")
@@ -41,7 +43,7 @@ def marshmallows(sel):
    for i, c in enumerate(cmd.get_chains(sel)):
       cmd.do("map_new map%s, gaussian, 1, (%s and chain %s), 10" % (c, sel, c))
       cmd.do("isosurface surf%s, map%s" % (c, c))
-      cmd.do("color %s, surf%s" % (COLs[i % 2], c))
+      cmd.do("color %s, surf%s" % (COLs[i], c))
 
    cmd.do("set antialias, 2")
    cmd.do("set ray_trace_gain, 0.4")

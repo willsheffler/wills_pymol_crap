@@ -25,6 +25,11 @@ except:
 
 nsymmetrizecx = 0
 
+def rottf(sele='vis'):
+   rot(sele, Vec(1, 1, 1), 120)
+
+cmd.extend('rottf', rottf)
+
 def get_xforms_by_chain(sele="all", verbose=False, userms=False):
    v = cmd.get_view()
    cen = com("(" + sele + ") and (name CA and not HET)")
@@ -228,12 +233,10 @@ def guesscxaxis(sele, nfold=None, chains0=list(), extrasel="name CA"):
       for c in clist:
          chain_index[c] = i
    coords = [list() for c in chains]
-   print(len(coords), [len(x) for x in coords])
+
    for a in atoms:
       if a.chain in chain_index:
          coords[chain_index[a.chain]].append(Vec(a.coord))
-   for c in coords:
-      print(len(c))
    return cyclic_axis(coords)
 
 def aligncx(sele, nfold, alignsele=None, tgtaxis=Uz, chains=list(), extrasel="name CA"):
@@ -728,6 +731,89 @@ def trim_sym(sel="all", na=1, nb=1):
       cmd.remove(sel + " and chain B and resi " + str(b[ib]))
 
 cmd.extend("trim_sym", trim_sym)
+
+def hframe(u, v, w, cen=None):
+   from willutil import hpoint, hnormalized, hcross, hpoint
+   u, v, w = hpoint(u), hpoint(v), hpoint(w)
+   assert u.shape == v.shape == w.shape
+   if cen is None: cen = u
+   cen = hpoint(cen)
+   assert cen.shape == u.shape
+   stubs = np.empty(u.shape[:-1] + (4, 4))
+   stubs[..., :, 0] = hnormalized(u - v)
+   stubs[..., :, 2] = hnormalized(hcross(stubs[..., :, 0], w - v))
+   stubs[..., :, 1] = hcross(stubs[..., :, 2], stubs[..., :, 0])
+   stubs[..., :, 3] = hpoint(cen[..., :])
+   return stubs
+
+def common_coords(ch1, ch2, xyz1, xyz2):
+   if len(xyz1) == len(xyz2): return xyz1, xyz2
+   s1 = str.join('', cmd.get_fastastr('chain ' + ch1).splitlines()[1:])
+   s2 = str.join('', cmd.get_fastastr('chain ' + ch2).splitlines()[1:])
+   # print(len(s1),len(xyz1))
+   # print(len(s2),len(xyz2))
+   assert len(s1) == len(xyz1)
+   assert len(s2) == len(xyz2)
+   import pylcs
+   idx1 = [i for i in pylcs.lcs_string_idx(s2, s1) if i > 0]
+   if len(idx1) < 100: return None,None
+   idx2 = [i for i in pylcs.lcs_string_idx(s1, s2) if i > 0]
+   sub1 = str.join('', [s1[i] for i in idx1])
+   sub2 = str.join('', [s2[i] for i in idx2])
+   if sub2[1:] == sub1:
+      sub2 = sub2[1:]
+      idx2 = idx2[1:]
+   print(sub1)
+   print(sub2)
+   assert sub1 == sub2
+
+   return xyz1[idx1], xyz2[idx2]
+
+def get_chain_frames(fname, chain, sele='all', test=False):
+   import willutil as wu
+   xyz0 = cmd.get_coords(sele + ' and chain ' + chain)
+   L = len(xyz0)
+   asym = hframe(xyz0[:L // 3].mean(0), xyz0[L // 3:2 * L // 3].mean(0), xyz0[2 * L // 3:].mean(0), xyz0.mean(0))
+   chains = dict()
+   frames = list()
+   counts = dict()
+   for i, ch in enumerate(cmd.get_chains(sele)):
+      xyz = cmd.get_coords(sele + ' and chain ' + ch)
+      L = len(xyz)
+      print(ch, L)
+      if len(xyz) not in counts:
+         counts[L] = 1
+         chains[L] = ch
+      else:
+         counts[len(xyz)] += 1
+      if test:
+         continue
+      # if len(xyz0) != len(xyz):
+      # print(len(xyz0), len(xyz))
+      # cmd.remove('chain ' + ch)
+      # print(test)
+      # continue
+      # assert xyz0.shape == xyz.shape
+      # print('FOO')
+      xyz1, xyz2 = common_coords(chain, ch, xyz0, xyz)
+      if xyz1 is None: continue
+      # x = hframe(xyz[:L//3].mean(0), xyz[L//3:2*L//3].mean(0), xyz[2*L//3:].mean(0), xyz.mean(0))
+      rms, fit, x = wu.hrmsfit(xyz1, xyz2)
+      print(rms)
+      x = wu.hxform(x, asym)
+
+      # assert 0
+      assert x.shape == (4, 4)
+      frames.append(x)
+
+
+   for k in chains:
+      print(k, counts[k] / 60, chains[k])
+   if test: return
+   sym = np.stack(frames)
+   np.save(f'{fname}.npy', sym)
+   print('frames', sym.shape)
+
 
 def nulltest():
    """

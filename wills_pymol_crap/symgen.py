@@ -16,6 +16,47 @@ from wills_pymol_crap.symgen_classes import (
    RosettaSymDef,
 )
 
+
+def get_chain_frames(sel='visible'):
+   xforms = list()
+   for x in cmd.get_object_list(sel):
+      for ch in cmd.get_chains(x):
+         f = getframe(f'{sel} and chain {ch}')
+         x = np.eye(4)
+         x[0,:3] = f.R.rowx()
+         x[1,:3] = f.R.rowy()
+         x[2,:3] = f.R.rowz()                        
+         x[:3,3] = f.t
+         xforms.append(x)
+   xforms = np.stack(xforms)
+   ic(xforms.shape)
+   np.save('T4.npy', xforms)
+
+def make_helix_simple(n=20, nstates=1):
+   cmd.delete('MAKESYM')
+   cmd.set('suspend_updates', 'on')
+   v = cmd.get_view()
+
+   for istate in range(max(1, nstates)):
+      state = istate + 1
+
+      frame0 = getframe('chain A and vis', state=state)
+      if state in (8, 17, 19, 20):
+         frame1 = getframe('chain D and vis', state=state)
+      else:
+         frame1 = getframe('chain B and vis', state=state)
+      fdelta = frame1 * ~frame0
+      frames = [Xform()]
+      for i in range(n):
+         frames.append(fdelta * frames[-1])
+
+      srcstate = state if nstates > 0 else 0
+      tgtstate = -1 if nstates > 0 else 0
+      makesym(frames, f'vis and chain A', srcstate=srcstate, tgtstate=tgtstate)
+
+   cmd.set_view(v)
+   cmd.set('suspend_updates', 'off')
+
 def make_p632(*args, depth=6, **kw):
    make_layer(3, 2, 'ABC', 'AD', *args, depth=depth, **kw)
 
@@ -37,6 +78,7 @@ def make_layer(
    asym='vis and chain A',
    depth=6,
    maxrad=9e9,
+   nstates=0,
    **kw,
 ):
    cmd.set('suspend_updates', 'on')
@@ -46,33 +88,83 @@ def make_layer(
    cmd.delete('obj TMP_*')
    if sele is None:
       sele = cmd.get_object_list()[0]
-   cen_nf1 = com(f'({sele}) and chain {"+".join(cnfold1)}')
-   cen_nf2 = com(f'({sele}) and chain {"+".join(cnfold2)}')
-   # generators1 = [
-   # # rotation_around_degrees(Vec(0, 0, 1), 0, cen_nf1),
-   # rotation_around_degrees(Vec(0, 0, 1), 120, cen_nf1),
-   # rotation_around_degrees(Vec(0, 0, 1), 240, cen_nf1),
-   # ]
-   angs1 = [np.pi * 2 / nfold1 * i for i in range(1, nfold1)]
-   angs2 = [np.pi * 2 / nfold2 * i for i in range(1, nfold2)]
-   generators1 = [rotation_around(Vec(0, 0, 1), a, cen_nf1) for a in angs1]
-   generators2 = [rotation_around(Vec(0, 0, 1), a, cen_nf2) for a in angs2]
-   # generators2 = [
-   # # rotation_around_degrees(Vec(0, 0, 1), 0, cen_nf2),
-   # rotation_around_degrees(Vec(0, 0, 1), 180, cen_nf2),
-   # ]
-   g = generators1 + generators2
 
-   frames = list(expand_xforms(g, N=depth, maxrad=maxrad))
+   for istate in range(max(1, nstates)):
+      state = istate + 1
+      cen_nf1 = com(f'({sele}) and chain {"+".join(cnfold1)}', state=state)
+      cen_nf2 = com(f'({sele}) and chain {"+".join(cnfold2)}', state=state)
+      # generators1 = [
+      # # rotation_around_degrees(Vec(0, 0, 1), 0, cen_nf1),
+      # rotation_around_degrees(Vec(0, 0, 1), 120, cen_nf1),
+      # rotation_around_degrees(Vec(0, 0, 1), 240, cen_nf1),
+      # ]
+      angs1 = [np.pi * 2 / nfold1 * i for i in range(1, nfold1)]
+      angs2 = [np.pi * 2 / nfold2 * i for i in range(1, nfold2)]
+      generators1 = [rotation_around(Vec(0, 0, 1), a, cen_nf1) for a in angs1]
+      generators2 = [rotation_around(Vec(0, 0, 1), a, cen_nf2) for a in angs2]
+      # generators2 = [
+      # # rotation_around_degrees(Vec(0, 0, 1), 0, cen_nf2),
+      # rotation_around_degrees(Vec(0, 0, 1), 180, cen_nf2),
+      # ]
+      g = generators1 + generators2
 
-   makesym(frames, f'{sele} and chain A')
+      frames = list(expand_xforms(g, N=depth, maxrad=maxrad))
+
+      srcstate = state if nstates > 0 else 0
+      tgtstate = -1 if nstates > 0 else 0
+      makesym(frames, f'{sele} and chain A', srcstate=srcstate, tgtstate=tgtstate)
 
    cmd.set_view(v)
    cmd.set('suspend_updates', 'off')
 
-def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9, verbose=False):
+def make_xtal(
+   sym=None,
+   sele=None,
+   asym='vis and chain A',
+   depth=6,
+   maxrad=9e9,
+   nstates=0,
+   **kw,
+):
+   import willutil as wu
+
+   cmd.set_state_order('MAKESYM', range(50, 0, -1))
+
+   cmd.set('suspend_updates', 'on')
    v = cmd.get_view()
-   cmd.delete(newobj)
+
+   cmd.delete('obj MAKESYM')
+   cmd.delete('obj TMP_*')
+   if sele is None:
+      sele = cmd.get_object_list()[0]
+
+   xtal = wu.sym.Xtal(sym)
+   nchain = len(cmd.get_chains(sele))
+
+   for istate in range(max(1, nstates)):
+      state = istate + 1
+      coords = cmd.get_coords(sele, state)
+
+      coords = coords.reshape(nchain, len(coords) // nchain, 3)
+
+      cellsize, _ = xtal.fit_coords(coords, noshift=True)
+      ic(istate, cellsize)
+      frames = xtal.frames(cellsize=cellsize, **kw)
+      frames = [Xform(Mat(*x[:3, :3].flat), Vec(x[:3, 3])) for x in frames]
+      # ic(frames)
+
+      srcstate = state if nstates > 0 else 0
+      tgtstate = -1 if nstates > 0 else 0
+      makesym(frames, f'{sele} and chain A', srcstate=srcstate, tgtstate=tgtstate)
+
+   cmd.set_view(v)
+   cmd.set('suspend_updates', 'off')
+
+def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9, verbose=False, srcstate=0,
+            tgtstate=-1,):
+   v = cmd.get_view()
+   if tgtstate >= 0:
+      cmd.delete(newobj)
    sele = "((" + sele + ") and (not obj TMP_makesym_*))"
    selechains = cmd.get_chains(sele)
    if verbose: print(selechains)
@@ -95,19 +187,19 @@ def makesym(frames0, sele="all", newobj="MAKESYM", depth=None, maxrad=9e9, n=9e9
       for j, c in enumerate(selechains):
          cmd.alter('obj ' + tmpname + " and chain " + c, "chain='%s'" % ROSETTA_CHAINS[len(selechains) * i + j])
       xform(tmpname, x)
-   cmd.create(newobj, "TMP_makesym_*")
+   cmd.create(newobj, "TMP_makesym_*", source_state=srcstate, target_state=tgtstate)
    cmd.delete("obj TMP_makesym_*")
    cmd.set_view(v)
    # util.cbc()
 
-def makecx(sel='all', name="TMP", n=5, axis=Uz):
+def makecx(sel='all', name="TMP", n=5, axis=Uz, chainoffset=0):
    if sel == 'all':
       for i, o in enumerate(cmd.get_object_list()):
          makecx(sel=o, name="TMP%i" % i, n=n, axis=axis)
       return
    v = cmd.get_view()
    cmd.delete("TMP__C%i_*" % n)
-   chains = ROSETTA_CHAINS
+   chains = ROSETTA_CHAINS[chainoffset:]
    for i in range(n):
       cmd.create("TMP__C%i_%i" % (n, i), sel + " and (not TMP__C%i_*)" % n)
    for i in range(n):
@@ -158,7 +250,7 @@ cmd.extend('mofview', mofview)
 def diffview():
    global MOVE_UP_DOWN_FUNC
 
-   cmd.do('remove not name n+ca+c+o; dss; util.cbc')
+   cmd.do('remove not name n+ca+c+o; dss; util.cbc; show sph')
    # cmd.turn('y', -80)
 
    o = cmd.get_object_list('vis')

@@ -3,6 +3,7 @@ import sys
 import os
 import inspect
 import functools
+
 newpath = os.path.dirname(inspect.getfile(inspect.currentframe()))  # script directory
 if not newpath in sys.path:
    sys.path.append(newpath)
@@ -169,18 +170,15 @@ def guess_helix_geometry(sele='vis', show=0, verbose=True, nfolds=None, n_to_con
       com_all = com("((%s) and name ca)" % sele)
       if axis_tmp.dot(com_all - cen_tmp) < 0:
          axis_tmp = Vec(0, 0, 0) - axis_tmp
-      coms_tosort = [
-         (axis_tmp.dot(coms[i] - cen_tmp), coms[i], chains[i]) for i in range(len(coms))
-      ]
+      coms_tosort = [(axis_tmp.dot(coms[i] - cen_tmp), coms[i], chains[i]) for i in range(len(coms))]
       coms = [xyz for t, xyz, c in sorted(coms_tosort)]
       chains = [c for t, xyz, c in sorted(coms_tosort)]
 
    axis, ang1, cen = None, None, None
    if True:  # this is just to limit scope
       # get initial gusss at helix axis, rotation angle, center
-      axis, ang1, cen = getrelframe(
-         '((%s) and name ca and chain %s)' % (sele, chains[1]),
-         '((%s) and name ca and chain %s)' % (sele, chains[0])).rotation_axis_center()
+      axis, ang1, cen = getrelframe('((%s) and name ca and chain %s)' % (sele, chains[1]),
+                                    '((%s) and name ca and chain %s)' % (sele, chains[0])).rotation_axis_center()
       # make sure axis points toward bulk of helix
       com_all = com("((%s) and name ca)" % sele)
       if axis.dot(com_all - cen) < 0:
@@ -298,8 +296,7 @@ def guess_helix_geometry(sele='vis', show=0, verbose=True, nfolds=None, n_to_con
          unit_trans += (xyz - coms[0]).dot(axis) / mult
          num_unit_trans += 1
          if verbose:
-            print(mult_actual, mult, (xyz - coms[0]).dot(axis), unit_trans,
-                  (xyz - coms[0]).dot(axis) / mult)
+            print(mult_actual, mult, (xyz - coms[0]).dot(axis), unit_trans, (xyz - coms[0]).dot(axis) / mult)
    unit_trans /= num_unit_trans
    sub2_trans = (coms[1] - coms[0]).dot(axis)
    if verbose:
@@ -414,8 +411,7 @@ def guess_helix_geometry(sele='vis', show=0, verbose=True, nfolds=None, n_to_con
    return axis, cen, unit_ang, nfold, unit_trans, unit_xform, start
 
 def make_chainAB(sele='vis', show=0, **args):
-   axis, cen, unit_ang, nfold, unit_trans, unit_xform = guess_helix_geometry(
-      sele, show=show, *args)
+   axis, cen, unit_ang, nfold, unit_trans, unit_xform = guess_helix_geometry(sele, show=show, *args)
    cmd.remove('not chain A')
    cmd.create("chainB", "chain A")
    xform("chainB", unit_xform)
@@ -514,15 +510,14 @@ def getobjname(sele, objname=None):
    orig = [objname]
    if not objname:
       orig = cmd.get_object_list(sele)
-   assert len(orig) is 1
+   assert len(orig) == 1
    return '%s_%i' % (orig[0], NHELIX)
 
 def makeh(sele='vis', n=30, objname='HELIX', nfolds=None, show=False, unique_objname=False, **kw):
    if unique_objname:
       objname = getobjname(sele, objname)
    cmd.delete(objname)
-   axis, cen, unit_ang, nfold, unit_trans, unit_xform, start = guess_helix_geometry(
-      sele, nfolds=nfolds, show=show)
+   axis, cen, unit_ang, nfold, unit_trans, unit_xform, start = guess_helix_geometry(sele, nfolds=nfolds, show=show)
    print("================================== makeh ========================================")
    print("unit_nag:", unit_ang, "unit_trans:", unit_trans, "nfold:", nfold)
    if n < 0:
@@ -628,8 +623,7 @@ def test_all(loc, maxnum=99999999):
             out.write(fn + " / " + str(e) + "\n")
             out.flush()
             failures.append((fn, e))
-      print(
-         "=================================== test_all DONE ===================================")
+      print("=================================== test_all DONE ===================================")
       for f, e in failures:
          print(f, e)
 
@@ -728,8 +722,7 @@ def helix_stats_this_dir():
          start, nfold = 1, 1
          if contact == 0:
             try:
-               axis, cen, unit_ang, nfold, unit_trans, unit_xform, start = (guess_helix_geometry(
-                  'name ca', show=0))
+               axis, cen, unit_ang, nfold, unit_trans, unit_xform, start = (guess_helix_geometry('name ca', show=0))
             except:
                print('RESULT', fn, "ERROR in guess_helix_geometry")
                continue
