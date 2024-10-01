@@ -1,9 +1,9 @@
 import itertools, functools, re, os, inspect
 from wills_pymol_crap.xyzMath import (Vec, Mat, Xform, RAD, projperp, SYMTET, SYMOCT, SYMICS, isvec, randnorm, Ux, Uy,
                                       Uz)
-from wills_pymol_crap.pymol_util import ROSETTA_CHAINS, xform
+from wills_pymol_crap.pymol_util import ROSETTA_CHAINS, xform, rot, trans
 from wills_pymol_crap.pymol_util import cgo_cyl, cgo_sphere, pymol, pdb_format_atom
-from pymol import cmd
+from pymol import cmd, util
 from wills_pymol_crap.symgen_classes import (
    SymElem,
    SymElemPosition,

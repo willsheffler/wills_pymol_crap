@@ -4,6 +4,10 @@
 		{
 			"name": "run_i4132",
 			"shell_cmd": "cd $folder; pymol -d 'run /home/sheffler/src/wills_pymol_crap/wills_pymol_crap/examples/gyroid.pml'"
+		},
+		{
+			"name": "run pymol",
+			"shell_cmd": "cd $folder; pymol -c '"
 		}
 	],
 	"folders":
