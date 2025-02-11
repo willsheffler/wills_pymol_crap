@@ -2571,6 +2571,21 @@ _pdb_atom_record_format = ("ATOM  {ia:5d} {an:^4}{idx:^1}{rn:3s} {c:1}{ir:4d}{in
                            "{x:8.3f}{y:8.3f}{z:8.3f}{occ:6.2f}{b:6.2f}           {elem:1s}\n")
 
 
+def setup_rfdsym_guideposts():
+   cmd.hide('car')
+   cmd.show('sti')
+   cmd.show('sph', 'chain Q')
+   cmd.show('nonbonded')
+   cmd.set('sphere_scale', '0.4')
+   cmd.color('gray', 'chain Q') # chiral
+   util.cbc()
+   # util.cnc()
+   cmd.color('red', 'chain P') # guideposts
+   cmd.color('brown', 'chain X') # atomized
+   cmd.color('white', 'chain Z') # lig
+
+cmd.extend('symtest', setup_rfdsym_guideposts)
+
 if __name__ == "__main__":
    import doctest
 
